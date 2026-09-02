@@ -1,0 +1,124 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>资源管理与文件夹映射设计稿</title>
+    <link rel="stylesheet" href="./styles.css?v=20260812-128000" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="asset-panel" aria-label="资产库">
+        <button class="panel-toggle" id="panelToggle" type="button" title="收起资产库" aria-label="收起资产库">
+          <span class="panel-toggle-icon" aria-hidden="true">‹</span>
+        </button>
+        <header class="panel-header">
+          <div>
+            <div class="panel-title">资产库</div>
+            <div class="panel-subtitle" id="panelSubtitle">当前画布资源导航</div>
+          </div>
+        </header>
+        <div class="panel-rail" aria-hidden="true">
+          <div class="panel-rail-head">
+            <div class="panel-rail-count" id="panelRailCount">0 项</div>
+          </div>
+          <div class="panel-rail-tabs" aria-label="快速切换">
+            <button class="panel-rail-tab active" data-tab="canvas" type="button" title="画布" aria-label="画布">
+              <span class="panel-rail-tab-icon" aria-hidden="true">画</span>
+            </button>
+            <button class="panel-rail-tab" data-tab="mine" type="button" title="我的" aria-label="我的">
+              <span class="panel-rail-tab-icon" aria-hidden="true">我</span>
+            </button>
+            <button class="panel-rail-tab" data-tab="shared" type="button" title="项目" aria-label="项目">
+              <span class="panel-rail-tab-icon" aria-hidden="true">项</span>
+            </button>
+          </div>
+          <div class="panel-rail-label">资产库</div>
+        </div>
+
+        <nav class="tabs" aria-label="资源库类型">
+          <button class="tab active" data-tab="canvas" type="button">画布</button>
+          <button class="tab" data-tab="mine" type="button">我的</button>
+          <button class="tab" data-tab="shared" type="button">项目</button>
+        </nav>
+
+        <section class="toolbar" aria-label="工具区">
+          <label class="search-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="搜索当前画布节点" />
+          </label>
+          <div class="toolbar-icons">
+            <button class="mini-icon-button hidden" id="rootCreateButton" type="button" title="新建一级文件夹" aria-label="新建一级文件夹">
+              <svg class="toolbar-svg" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+            </button>
+            <button class="mini-icon-button" id="collapseAllButton" type="button" title="一键收起" aria-label="一键收起">
+              <svg class="toolbar-svg" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h14" />
+                <path d="M5 12h14" />
+                <path d="M5 17h14" />
+                <path d="M9 3l3 3 3-3" />
+                <path d="M9 21l3-3 3 3" />
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="tree-area" id="treeArea" aria-label="内容浏览区"></section>
+      </aside>
+
+      <section class="canvas-stage" aria-label="画布">
+        <div class="canvas-board" id="canvasBoard">
+          <div class="canvas-selection" id="canvasSelectionLabel">已选中：萧峰_立绘</div>
+          <div class="canvas-node image-node" data-node-id="hero">
+            <div class="thumb image-a"></div>
+            <strong>萧峰_立绘</strong>
+            <span>图片节点</span>
+          </div>
+          <div class="canvas-node video-node" data-node-id="hook">
+            <div class="thumb video-a"></div>
+            <strong>高福利开局_A段钩子</strong>
+            <span>视频节点 · 15s</span>
+          </div>
+          <div class="canvas-node text-node" data-node-id="copy">
+            <strong>口播文案_v2</strong>
+            <p>开局送满级福利，三分钟爽刷 Boss。</p>
+          </div>
+
+          <aside class="agent-context" aria-label="Agent 引用素材">
+            <div class="agent-context-header">
+              <div>
+                <div class="agent-title">Agent 引用</div>
+                <div class="agent-subtitle">已引用素材会进入 Agent 可调用上下文</div>
+              </div>
+              <span class="agent-count" id="agentCount">0</span>
+            </div>
+            <div class="agent-empty" id="agentEmpty">暂无引用素材</div>
+            <div class="agent-list" id="agentList"></div>
+          </aside>
+          <div class="canvas-group" data-node-id="group">
+            <div class="group-title">成片素材集合_高福利开局</div>
+            <div class="mini-node mini-video"></div>
+            <div class="mini-node mini-text"></div>
+            <div class="mini-node mini-audio"></div>
+          </div>
+        </div>
+
+        <aside class="activity-log" aria-label="操作反馈">
+          <div class="activity-title">操作反馈</div>
+          <div id="toastLog">悬浮资源查看预览，右键打开快捷菜单；画布节点可直接拖拽移动。</div>
+        </aside>
+      </section>
+    </main>
+
+    <div class="preview-card hidden" id="previewCard" role="dialog" aria-label="资源预览"></div>
+    <div class="context-menu hidden" id="contextMenu" role="menu"></div>
+    <div class="modal-layer hidden" id="modalLayer" role="dialog" aria-modal="true" aria-label="操作弹窗">
+      <div class="modal-card" id="modalCard"></div>
+    </div>
+
+    <script src="./app.project.js?v=20260812-128000"></script>
+  </body>
+</html>

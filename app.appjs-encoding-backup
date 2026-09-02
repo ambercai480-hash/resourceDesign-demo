@@ -1,0 +1,1439 @@
+﻿const state = {
+  activeTab: "canvas",
+  query: "",
+  filter: "all",
+  selectedId: null,
+  folderCounter: 1,
+  assetCounter: 1,
+  sharedCounter: 1,
+  sharedProjectId: null,
+  canvasSelection: ["hero", "hook", "copy"],
+  agentRefs: [],
+  expandedByTab: {
+    canvas: new Set(["canvas-group", "canvas-raw"]),
+    mine: new Set(["mine-role", "mine-role-game", "mine-monster", "mine-monster-game", "mine-pet", "mine-pet-game", "mine-scene", "mine-scene-game", "mine-prop", "mine-prop-game", "mine-ui", "mine-ui-game", "mine-film", "mine-film-game", "mine-film-project", "mine-talent", "mine-talent-common", "mine-copy", "mine-copy-game", "mine-audio", "mine-audio-common", "mine-brand", "mine-brand-game", "mine-process", "mine-process-game", "mine-other", "mine-other-common"]),
+    shared: new Set(["shared-project-1", "shared-role", "shared-brand"])
+  }
+};
+
+const copy = {
+  canvas: {
+    subtitle: "褰撳墠鐢诲竷璧勬簮瀵艰埅",
+    placeholder: "鎼滅储褰撳墠鐢诲竷鑺傜偣",
+  },
+  mine: {
+    subtitle: "涓汉璧勬簮鍒嗙被涓庢垚鐗囩礌鏉愰泦鍚?,
+    placeholder: "鎼滅储鎴戠殑璧勬簮",
+  },
+  shared: {
+    subtitle: "鏈夋潈闄愮殑椤圭洰璧勬簮搴?,
+    placeholder: "鎼滅储鎵€鏈夊叡浜簱",
+  }
+};
+
+const trees = {
+  canvas: [
+    item("hero", "钀у嘲_绔嬬粯", "image", "鍥剧墖鑺傜偣", "瑙掕壊绔嬬粯锛屾潵鑷綋鍓嶇敾甯?, "钀у嘲_绔嬬粯"),
+    folder("canvas-group", "鎴愮墖绱犳潗闆嗗悎_楂樼鍒╁紑灞€", { group: true }, [
+      item("hook", "楂樼鍒╁紑灞€_A娈甸挬瀛?, "video", "瑙嗛鑺傜偣", "15s 绔栫増 A 娈?, "鎴愮墖绱犳潗闆嗗悎_楂樼鍒╁紑灞€"),
+      item("copy", "鍙ｆ挱鏂囨_v2", "text", "鏂囨湰鑺傜偣", "寮€灞€閫佹弧绾х鍒?, "鎴愮墖绱犳潗闆嗗悎_楂樼鍒╁紑灞€"),
+      item("voice", "閰嶉煶_鐑鐢峰０", "audio", "闊抽鑺傜偣", "12s 閰嶉煶", "鎴愮墖绱犳潗闆嗗悎_楂樼鍒╁紑灞€")
+    ]),
+    folder("canvas-raw", "涓存椂鑽夌缁刜涓嶆敹绾?, { group: true }, [
+      item("draft-1", "鍙傝€冨浘_椋庢牸鎺㈢储", "image", "鍥剧墖鑺傜偣", "鑽夌鍐呭锛屽彲鍙暀鍦ㄧ敾甯?, "涓存椂鑽夌缁刜涓嶆敹绾?)
+    ])
+  ],
+  mine: [
+    folder("mine-role", "瑙掕壊", { fixed: true }, [
+      folder("mine-role-game", "澶╅緳鍏儴2", {}, [
+        item("mine-role-1", "钀у嘲_绔嬬粯_鐧藉簳.png", "image", "鍥剧墖", "涓汉鍓湰", "瑙掕壊 / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-role-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-monster", "鎬墿/Boss", { fixed: true }, [
+      folder("mine-monster-game", "澶╅緳鍏儴2", {}, [
+        item("mine-monster-1", "榛戦緳Boss_绔嬬粯.png", "image", "鍥剧墖", "鐖界偣鍑绘潃绱犳潗", "鎬墿/Boss / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-monster-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-pet", "瀹犵墿/鍧愰獞", { fixed: true }, [
+      folder("mine-pet-game", "澶╅緳鍏儴2", {}, [
+        item("mine-pet-1", "闈掗緳鍧愰獞_涓夎鍥?png", "image", "鍥剧墖", "杈呭姪涓讳綋绱犳潗", "瀹犵墿/鍧愰獞 / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-pet-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-scene", "鍦烘櫙/鍦板浘", { fixed: true }, [
+      folder("mine-scene-game", "澶╅緳鍏儴2", {}, [
+        item("mine-scene-1", "娲涢槼鍩巁鎴樻枟鍦烘櫙.png", "image", "鍥剧墖", "甯哥敤鑳屾櫙绱犳潗", "鍦烘櫙/鍦板浘 / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-scene-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-prop", "閬撳叿", { fixed: true }, [
+      folder("mine-prop-game", "澶╅緳鍏儴2", {}, [
+        item("mine-prop-1", "灞犻緳鍒€_姝﹀櫒鍥炬爣.png", "image", "鍥剧墖", "姝﹀櫒銆佽澶囥€佺ぜ鍖呫€佽揣甯佺瓑娓告垙鐗╀欢", "閬撳叿 / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-prop-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-ui", "UI", { fixed: true }, [
+      folder("mine-ui-game", "澶╅緳鍏儴2", {}, [
+        item("mine-ui-1", "娲诲姩鍏ュ彛_鎸夐挳.png", "image", "鍥剧墖", "娓告垙鍐呮寜閽€佸脊绐椼€佸浘鏍囩瓑鐣岄潰绱犳潗", "UI / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-ui-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-film", "鎴愮墖绱犳潗闆嗗悎", { fixed: true }, [
+      folder("mine-film-game", "澶╅緳鍏儴2", {}, [
+        folder("mine-film-project", "楂樼鍒╁紑灞€_绔栫増_20260803", {}, [
+          item("mine-film-final", "鏈€缁堟垚鐗?mp4", "video", "瑙嗛", "鎴愮墖鐗堟湰 v2", "鎴愮墖绱犳潗闆嗗悎 / 澶╅緳鍏儴2 / 楂樼鍒╁紑灞€_绔栫増_20260803"),
+          item("mine-film-hook", "A娈甸挬瀛?mp4", "video", "瑙嗛", "鍙浛鎹㈠紑澶撮挬瀛?, "鎴愮墖绱犳潗闆嗗悎 / 澶╅緳鍏儴2 / 楂樼鍒╁紑灞€_绔栫増_20260803"),
+          item("mine-film-script", "鍙ｆ挱鏂囨.txt", "text", "鏂囨湰", "BPM 鎻愪氦鍓嶆暣鐞?, "鎴愮墖绱犳潗闆嗗悎 / 澶╅緳鍏儴2 / 楂樼鍒╁紑灞€_绔栫増_20260803"),
+          item("mine-film-voice", "閰嶉煶.mp3", "audio", "闊抽", "鐢峰０鐗堟湰", "鎴愮墖绱犳潗闆嗗悎 / 澶╅緳鍏儴2 / 楂樼鍒╁紑灞€_绔栫増_20260803")
+        ])
+      ]),
+      folder("mine-film-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-talent", "杈句汉绱犳潗", { fixed: true }, [
+      folder("mine-talent-common", "閫氱敤", {}, [
+        item("mine-talent-1", "杈句汉鍙ｆ挱_鐑鐗?mp4", "video", "瑙嗛", "涓绘挱銆佽揪浜恒€佺湡浜烘紨鍛樸€佷唬瑷€浜虹瓑鐪熶汉绱犳潗", "杈句汉绱犳潗 / 閫氱敤")
+      ])
+    ]),
+    folder("mine-copy", "鏂囨/瀛楀箷", { fixed: true }, [
+      folder("mine-copy-game", "澶╅緳鍏儴2", {}, [
+        item("mine-copy-1", "楂樼鍒╁崠鐐筥瀛楀箷.txt", "text", "鏂囨湰", "鏍囬銆佸崠鐐广€佸彛鎾銆佸瓧骞曟枃鏈?, "鏂囨/瀛楀箷 / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-copy-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-audio", "闊抽绱犳潗", { fixed: true }, [
+      folder("mine-audio-common", "閫氱敤", {}, [
+        item("mine-audio-1", "鐑BGM_15s.mp3", "audio", "闊抽", "BGM銆侀煶鏁堛€侀厤闊炽€佹梺鐧?, "闊抽绱犳潗 / 閫氱敤")
+      ])
+    ]),
+    folder("mine-brand", "鍝佺墝/娓犻亾绱犳潗", { fixed: true }, [
+      folder("mine-brand-game", "澶╅緳鍏儴2", {}, [
+        item("mine-kv", "涓籏V_鏄ヨ妭娲诲姩_v1.png", "image", "鍥剧墖", "娓犻亾鎶曟斁绱犳潗", "鍝佺墝/娓犻亾绱犳潗 / 澶╅緳鍏儴2"),
+        item("mine-banner", "娓犻亾-banner-鎶曟斁.png", "image", "鍥剧墖", "涔伴噺绱犳潗", "鍝佺墝/娓犻亾绱犳潗 / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-brand-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-process", "杩囩▼鏂囦欢", { fixed: true }, [
+      folder("mine-process-game", "澶╅緳鍏儴2", {}, [
+        item("mine-process-1", "BPM鎻愪氦鏁寸悊_楂樼鍒╁紑灞€.zip", "file", "鏂囦欢", "鑽夌銆佽凯浠ｇ銆佸緟瀹℃牳绋垮拰 BPM 鎻愪氦鍓嶆暣鐞嗗唴瀹?, "杩囩▼鏂囦欢 / 澶╅緳鍏儴2")
+      ]),
+      folder("mine-process-common", "閫氱敤", {}, [])
+    ]),
+    folder("mine-other", "鍏朵粬", { fixed: true }, [
+      folder("mine-other-common", "閫氱敤", {}, [
+        item("mine-other-1", "涓存椂鍙傝€冨浘.png", "image", "鍥剧墖", "鏃犳硶褰掔被鐨勪复鏃剁礌鏉?, "鍏朵粬 / 閫氱敤")
+      ])
+    ])
+  ],
+  shared: [
+    folder("shared-project-1", "澶╅緳鍏儴2", { permission: "manage", project: true }, [
+      folder("shared-role", "瑙掕壊", { permission: "manage" }, [
+        item("shared-role-1", "钀у嘲_涓夎鍥?png", "image", "鍥剧墖", "鍙鐞?, "澶╅緳鍏儴2 / 瑙掕壊", "manage"),
+        item("shared-role-2", "鐢峰紦绠璤绔嬬粯.png", "image", "鍥剧墖", "鍙鐞?, "澶╅緳鍏儴2 / 瑙掕壊", "manage")
+      ]),
+      folder("shared-brand", "鍝佺墝", { permission: "edit" }, [
+        item("shared-logo", "logo-閫忔槑搴?png", "image", "鍥剧墖", "鍙紪杈?, "澶╅緳鍏儴2 / 鍝佺墝", "edit")
+      ]),
+      folder("shared-ui", "UI", { permission: "read" }, [
+        item("shared-ui-1", "鐧诲綍椤礯鎸夐挳.png", "image", "鍥剧墖", "鍙槄璇?, "澶╅緳鍏儴2 / UI", "read")
+      ]),
+      folder("shared-scene-folder", "鍦烘櫙", { permission: "read" }, [
+        item("shared-scene-1", "娲涢槼鍩巁鍦烘櫙鍘熺敾.png", "image", "鍥剧墖", "鍙槄璇?, "澶╅緳鍏儴2 / 鍦烘櫙", "read")
+      ])
+    ]),
+    folder("shared-project-2", "鐑姹熸箹", { permission: "read", project: true }, [
+      folder("shared-project-2-role", "瑙掕壊", { permission: "read" }, []),
+      folder("shared-project-2-brand", "鍝佺墝", { permission: "read" }, [])
+    ])
+  ]
+};
+
+function folder(id, name, meta = {}, children = []) {
+  return { id, name, type: "folder", meta, children };
+}
+
+function item(id, name, assetType, badge, description, path, permission) {
+  return { id, name, type: "asset", assetType, badge, description, path, permission, tags: buildDefaultTags(name, assetType, path) };
+}
+function normalizeSharedLibraries() {
+  const defaultCategories = ["瑙掕壊", "鍝佺墝", "鍧愰獞", "Boss", "瀹犵墿/鎬墿", "姝﹀櫒/閬撳叿", "UI", "鍦烘櫙", "娓犻亾杩愯惀", "鍏朵粬"];
+  trees.shared.forEach((project) => {
+    const permission = project.meta?.permission || "read";
+    defaultCategories.forEach((name) => {
+      if (!(project.children || []).some((child) => child.name === name)) {
+        project.children.push(folder(`${project.id}-${name}`, name, { permission }, []));
+      }
+    });
+    applyProjectPermission(project, permission);
+  });
+}
+
+function applyProjectPermission(node, permission) {
+  if (node.type === "folder") {
+    node.meta = { ...node.meta, permission };
+    (node.children || []).forEach((child) => applyProjectPermission(child, permission));
+    return;
+  }
+  node.permission = permission;
+  node.badge = permissionText(permission);
+}
+
+function getSharedProjectPermission(node) {
+  if (state.activeTab !== "shared") return node.permission || node.meta?.permission;
+  const project = findProjectForNode(trees.shared, node.id);
+  return project?.meta?.permission || node.permission || node.meta?.permission || "read";
+}
+
+function findProjectForNode(nodes, id, currentProject = null) {
+  for (const node of nodes) {
+    const project = node.meta?.project ? node : currentProject;
+    if (node.id === id) return project;
+    const found = findProjectForNode(node.children || [], id, project);
+    if (found) return found;
+  }
+  return null;
+}
+normalizeSharedLibraries();
+
+const tabs = document.querySelectorAll(".tab");
+const treeArea = document.querySelector("#treeArea");
+const searchInput = document.querySelector("#searchInput");
+const panelSubtitle = document.querySelector("#panelSubtitle");
+const filterButton = document.querySelector("#filterButton");
+const collapseAllButton = document.querySelector("#collapseAllButton");
+const filterPopover = document.querySelector("#filterPopover");
+const previewCard = document.querySelector("#previewCard");
+const contextMenu = document.querySelector("#contextMenu");
+const toastLog = document.querySelector("#toastLog");
+const modalLayer = document.querySelector("#modalLayer");
+const modalCard = document.querySelector("#modalCard");
+const agentList = document.querySelector("#agentList");
+const agentEmpty = document.querySelector("#agentEmpty");
+const agentCount = document.querySelector("#agentCount");
+const canvasSelectionLabel = document.querySelector(".canvas-selection");
+let previewHideTimer = null;
+
+previewCard.addEventListener("mouseenter", keepPreviewVisible);
+previewCard.addEventListener("mouseleave", schedulePreviewHide);
+
+function getExpanded() {
+  return state.expandedByTab[state.activeTab];
+}
+
+tabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    state.activeTab = tab.dataset.tab;
+    state.query = "";
+    state.filter = "all";
+    if (state.activeTab !== "shared") state.sharedProjectId = null;
+    searchInput.value = "";
+    updateFilterOptions();
+    hideLayers();
+    render();
+  });
+});
+
+searchInput.addEventListener("input", (event) => {
+  state.query = event.target.value.trim().toLowerCase();
+  renderTree();
+});
+
+
+filterButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  filterPopover.classList.toggle("hidden");
+  filterButton.classList.toggle("active", !filterPopover.classList.contains("hidden"));
+});
+
+filterPopover.addEventListener("click", (event) => {
+  const option = event.target.closest(".filter-option");
+  if (!option) return;
+  state.filter = option.dataset.filter;
+  updateFilterOptions();
+  filterPopover.classList.add("hidden");
+  filterButton.classList.remove("active");
+  renderTree();
+});
+
+collapseAllButton.addEventListener("click", () => {
+  if (state.activeTab === "shared" && !state.sharedProjectId) {
+    hideLayers();
+    log("褰撳墠宸插湪鍏变韩搴撳垪琛ㄣ€傝繘鍏ユ煇涓簱鍚庡彲涓€閿敹璧峰簱鍐呭垎绫汇€?);
+    return;
+  }
+  getExpanded().clear();
+  hideLayers();
+  renderTree();
+  log("宸叉敹璧峰綋鍓?Tab 鐨勬墍鏈夋枃浠跺す銆?);
+});
+
+document.querySelector("#addMineButton").addEventListener("click", () => {
+  openAddToMineModal(getCanvasSelectionForSave(), "淇濆瓨褰撳墠閫変腑鍐呭");
+});
+
+document.querySelector("#addSharedButton").addEventListener("click", () => {
+  openSharedModal(getCanvasSelectionForSave(), "鍔犲叆鍏变韩璧勬簮搴?);
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".context-menu")) contextMenu.classList.add("hidden");
+  if (!event.target.closest(".filter-popover") && !event.target.closest("#filterButton")) {
+    filterPopover.classList.add("hidden");
+    filterButton.classList.remove("active");
+  }
+});
+
+modalLayer.addEventListener("click", (event) => {
+  if (event.target === modalLayer) closeModal();
+});
+
+
+function initCanvasInteractions() {
+  document.querySelectorAll("[data-node-id]").forEach(bindCanvasElement);
+  document.querySelector("#canvasBoard").addEventListener("click", (event) => {
+    if (event.target.closest("[data-node-id]")) return;
+    selectCanvasNodes([]);
+  });
+  updateCanvasSelectionView();
+}
+
+
+function bindCanvasElement(element) {
+  if (element.dataset.bound === "true") return;
+  element.dataset.bound = "true";
+  element.addEventListener("click", (event) => {
+    event.stopPropagation();
+    selectCanvasNodes([element.dataset.nodeId]);
+  });
+  element.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectCanvasNodes([element.dataset.nodeId]);
+    showCanvasContextMenu(event, element.dataset.nodeId);
+  });
+}
+function selectCanvasNodes(ids) {
+  state.canvasSelection = ids;
+  updateCanvasSelectionView();
+}
+
+function updateCanvasSelectionView() {
+  document.querySelectorAll("[data-node-id]").forEach((element) => {
+    element.classList.toggle("selected", state.canvasSelection.includes(element.dataset.nodeId));
+  });
+  const selectedNames = getCanvasSelectionForSave().map((node) => node.name);
+  canvasSelectionLabel.textContent = selectedNames.length ? `宸查€変腑锛?{selectedNames.join("銆?)}` : "鏈€変腑鐢诲竷鍐呭";
+}
+
+function showCanvasContextMenu(event, domId) {
+  const node = getCanvasResourceByDomId(domId);
+  if (!node) {
+    log("鏈壘鍒板搴旂敾甯冭妭鐐广€?);
+    return;
+  }
+  const items = [
+    { label: "鍔犲叆鎴戠殑璧勬簮搴?, handler: () => openAddToMineModal([node], "淇濆瓨鍒版垜鐨勮祫婧愬簱") },
+    { label: "鍔犲叆鍏变韩璧勬簮搴?, handler: () => openSharedModal([node], "鍔犲叆鍏变韩璧勬簮搴?) },
+    { label: "鍒涘缓鍓湰", handler: () => createCanvasDuplicate(node) },
+    { label: "缂栬緫鏍囩", handler: () => openTagModal(node) },
+    { label: "寮曠敤鍒?Agent", handler: () => quoteToAgent(node) }
+  ];
+  contextMenu.innerHTML = "";
+  items.forEach(({ label, handler }) => {
+    const button = document.createElement("button");
+    button.className = "menu-item";
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      handler();
+      contextMenu.classList.add("hidden");
+    });
+    contextMenu.appendChild(button);
+  });
+  contextMenu.style.left = `${Math.min(event.clientX, window.innerWidth - 220)}px`;
+  contextMenu.style.top = `${Math.min(event.clientY, window.innerHeight - items.length * 36 - 16)}px`;
+  contextMenu.classList.remove("hidden");
+}
+
+function getCanvasResourceByDomId(domId) {
+  const map = { hero: "hero", hook: "hook", copy: "copy", group: "canvas-group" };
+  return findNodeWithParent(trees.canvas, map[domId] || domId)?.node;
+}
+function updateFilterOptions() {
+  document.querySelectorAll(".filter-option").forEach((option) => {
+    option.classList.toggle("active", option.dataset.filter === state.filter);
+  });
+}
+function render() {
+  tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === state.activeTab));
+  const tabCopy = copy[state.activeTab];
+  const sharedProject = getActiveSharedProject();
+  panelSubtitle.textContent = sharedProject ? `${sharedProject.name} 璧勬簮搴揱 : tabCopy.subtitle;
+  searchInput.placeholder = sharedProject ? "鎼滅储褰撳墠搴? : tabCopy.placeholder;
+  renderTree();
+}
+
+function renderTree() {
+  treeArea.innerHTML = "";
+
+  if (state.activeTab === "shared") {
+    renderSharedArea();
+    return;
+  }
+
+  const filtered = filterNodes(trees[state.activeTab], state.query, state.filter);
+  if (filtered.length === 0) {
+    treeArea.innerHTML = '<div class="empty-state">娌℃湁鎵惧埌鍖归厤璧勬簮</div>';
+    return;
+  }
+  filtered.forEach((node) => renderNode(node, 0));
+}
+
+function renderSharedArea() {
+  const activeProject = getActiveSharedProject();
+  if (!activeProject) {
+    const projects = filterSharedProjects(state.query);
+    if (projects.length === 0) {
+      treeArea.innerHTML = '<div class="empty-state">娌℃湁鎵惧埌鍖归厤鍏变韩搴?/div>';
+      return;
+    }
+    projects.forEach(renderSharedProjectCard);
+    return;
+  }
+
+  renderSharedLibraryHeader(activeProject);
+  const filteredChildren = filterNodes(activeProject.children || [], state.query, state.filter);
+  if (filteredChildren.length === 0) {
+    treeArea.insertAdjacentHTML("beforeend", '<div class="empty-state">褰撳墠搴撳唴娌℃湁鍖归厤璧勬簮</div>');
+    return;
+  }
+  filteredChildren.forEach((node) => renderNode(node, 0));
+}
+
+function getActiveSharedProject() {
+  return state.sharedProjectId ? findNodeWithParent(trees.shared, state.sharedProjectId)?.node : null;
+}
+
+function filterSharedProjects(query) {
+  const keyword = query.trim().toLowerCase();
+  return trees.shared.filter((project) => {
+    if (!keyword) return true;
+    return project.name.toLowerCase().includes(keyword) || countMatchingAssets(project, keyword) > 0;
+  });
+}
+
+function countMatchingAssets(node, keyword) {
+  return (node.children || []).reduce((total, child) => {
+    const match = matchesQuery(child, keyword);
+    return total + (match ? 1 : 0) + countMatchingAssets(child, keyword);
+  }, 0);
+}
+
+
+function matchesQuery(node, query) {
+  if (!query) return true;
+  const fields = [
+    node.name,
+    node.path,
+    node.badge,
+    node.description,
+    assetTypeLabel(node.assetType),
+    ...(node.tags || [])
+  ];
+  return fields.some((field) => String(field || "").toLowerCase().includes(query));
+}
+function filterNodes(nodes, query, filter) {
+  return nodes
+    .map((node) => {
+      const byQuery = matchesQuery(node, query);
+      const nodeKind = node.type === "folder" ? "folder" : node.assetType;
+      const byFilter = filter === "all" || nodeKind === filter;
+      if (node.children) {
+        const children = filterNodes(node.children, query, filter);
+        if ((byQuery && byFilter) || children.length) return { ...node, children };
+      }
+      return byQuery && byFilter ? node : null;
+    })
+    .filter(Boolean);
+}
+
+function renderNode(node, depth) {
+  const row = document.createElement("div");
+  row.className = `tree-row ${state.selectedId === node.id ? "selected" : ""}`;
+  row.style.paddingLeft = `${8 + depth * 18}px`;
+  row.dataset.id = node.id;
+  row.dataset.type = node.type;
+  row.dataset.asset = node.type === "asset" ? node.assetType : "folder";
+  row.innerHTML = `
+    <span class="twisty">${node.children ? (getExpanded().has(node.id) ? "鈱? : "鈥?) : ""}</span>
+    <span class="icon">${iconFor(node)}</span>
+    <span class="tree-name" title="${escapeHtml(node.name)}">${escapeHtml(node.name)}</span>
+  `;
+
+  if (node.type === "folder") {
+    row.addEventListener("click", () => {
+      if (getExpanded().has(node.id)) getExpanded().delete(node.id);
+      else getExpanded().add(node.id);
+      renderTree();
+    });
+  } else {
+    row.addEventListener("mouseenter", () => showPreview(row, node));
+    row.addEventListener("mouseleave", schedulePreviewHide);
+    row.addEventListener("click", () => selectRow(node));
+  }
+
+  row.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    selectRow(node);
+    showContextMenu(event, node);
+  });
+
+  treeArea.appendChild(row);
+
+  if (node.children && getExpanded().has(node.id)) {
+    node.children.forEach((child) => renderNode(child, depth + 1));
+  }
+}
+
+
+
+function renderSharedProjectCard(node) {
+  const card = document.createElement("div");
+  card.className = `shared-project-card ${state.selectedId === node.id ? "selected" : ""}`;
+  card.dataset.id = node.id;
+  const permission = node.meta?.permission || "read";
+  const count = countAssets(node);
+  card.innerHTML = `
+    <div class="shared-cover ${permission}">
+      <div class="shared-cover-title">${escapeHtml(node.name)}</div>
+      <div class="shared-cover-subtitle">椤圭洰璧勬簮搴?/div>
+    </div>
+    <div class="shared-card-main">
+      <div>
+        <div class="shared-card-name">${escapeHtml(node.name)}</div>
+        <div class="shared-card-meta">${count} 涓祫婧?路 ${permissionDescription(permission)}</div>
+      </div>
+      <span class="shared-permission ${permission}">${permissionText(permission)}</span>
+    </div>
+    <div class="shared-card-footer">杩涘叆璧勬簮搴?/div>
+  `;
+  card.addEventListener("click", () => {
+    state.sharedProjectId = node.id;
+    state.selectedId = node.id;
+    state.query = "";
+    state.filter = "all";
+    if (state.activeTab !== "shared") state.sharedProjectId = null;
+    searchInput.value = "";
+    updateFilterOptions();
+    hideLayers();
+    render();
+  });
+  card.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    selectRow(node);
+    showContextMenu(event, node);
+  });
+  treeArea.appendChild(card);
+}
+
+function renderSharedLibraryHeader(project) {
+  const permission = project.meta?.permission || "read";
+  const header = document.createElement("div");
+  header.className = "shared-library-header";
+  header.innerHTML = `
+    <button class="shared-back" type="button" aria-label="杩斿洖鍏变韩搴撳垪琛?>鈥?/button>
+    <div class="shared-library-title">
+      <div class="shared-library-name">${escapeHtml(project.name)}</div>
+      <div class="shared-library-meta">${countAssets(project)} 涓祫婧?路 ${permissionDescription(permission)}</div>
+    </div>
+    <span class="shared-permission ${permission}">${permissionText(permission)}</span>
+  `;
+  header.querySelector(".shared-back").addEventListener("click", () => {
+    state.sharedProjectId = null;
+    state.selectedId = null;
+    state.query = "";
+    state.filter = "all";
+    if (state.activeTab !== "shared") state.sharedProjectId = null;
+    searchInput.value = "";
+    updateFilterOptions();
+    hideLayers();
+    render();
+  });
+  treeArea.appendChild(header);
+}
+
+function countAssets(node) {
+  return (node.children || []).reduce((total, child) => {
+    if (child.type === "asset") return total + 1;
+    return total + countAssets(child);
+  }, 0);
+}
+
+function permissionDescription(permission) {
+  if (permission === "manage") return "鍙暣鐞嗚祫婧愩€佽皟鏁村垎绫汇€佺鐞嗘垚鍛?;
+  if (permission === "edit") return "鍙姞鍏ュ拰鏁寸悊璧勬簮";
+  return "鍙祻瑙堛€佸彟瀛樸€佸彂閫佸埌鐢诲竷";
+}
+function iconFor(node) {
+  if (node.type === "folder") return node.meta?.project ? "椤? : node.meta?.group ? "缁? : "澶?;
+  const icons = { image: "鍥?, video: "鎾?, text: "鏂?, audio: "闊? };
+  return icons[node.assetType] || "璧?;
+}
+
+
+function buildDefaultTags(name, assetType, path = "") {
+  const tags = [assetTypeLabel(assetType)];
+  [name, path].join(" /").split(/[\s_\-\/]+/).forEach((part) => {
+    const value = part.trim();
+    if (value && value.length <= 12 && !tags.includes(value)) tags.push(value);
+  });
+  return tags.slice(0, 5);
+}
+
+function assetTypeLabel(assetType) {
+  const labels = { image: "鍥剧墖", video: "瑙嗛", text: "鏂囨", audio: "闊抽", file: "鏂囦欢" };
+  return labels[assetType] || "璧勬簮";
+}
+
+function renderTagChips(node) {
+  const tags = node.tags || [];
+  if (!tags.length) return '<div class="preview-tags empty">鏆傛棤鏍囩</div>';
+  return `<div class="preview-tags">${tags.map((tag) => `<span class="tag-chip">${escapeHtml(tag)}</span>`).join("")}</div>`;
+}
+
+function openTagModal(node) {
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">缂栬緫鏍囩</div>
+      <div class="modal-desc">涓恒€?{escapeHtml(node.name)}銆嶈ˉ鍏呮绱㈠拰 Agent 璋冪敤鏍囩銆?/div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="tagInput">鏍囩</label>
+        <input id="tagInput" type="text" value="${escapeHtml((node.tags || []).join('锛?))}" autocomplete="off" />
+      </div>
+      <div class="modal-tip">澶氫釜鏍囩鍙敤绌烘牸銆侀€楀彿鎴栭】鍙峰垎闅斻€傛爣绛剧敤浜庢悳绱€佺瓫閫夊拰 Agent 鐞嗚В绱犳潗锛屼笉鏀瑰彉鏂囦欢鎵€鍦ㄧ洰褰曘€?/div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>淇濆瓨</button>
+    </div>
+  `;
+  modalLayer.classList.remove("hidden");
+  const input = modalCard.querySelector("#tagInput");
+  input.focus();
+  input.select();
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    node.tags = parseTags(input.value);
+    closeModal();
+    hideLayers();
+    renderTree();
+    log(`宸叉洿鏂版爣绛撅細${node.name}`);
+  });
+}
+
+function parseTags(value) {
+  const seen = new Set();
+  return value
+    .split(/[\s,锛屻€乚+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .filter((tag) => {
+      if (seen.has(tag)) return false;
+      seen.add(tag);
+      return true;
+    })
+    .slice(0, 12);
+}
+function cloneTags(node) {
+  return [...(node.tags || [])];
+}
+
+function showPreview(anchorRow, node) {
+  keepPreviewVisible();
+  const isCanvas = state.activeTab === "canvas";
+  const action = isCanvas ? "瀹氫綅鍒拌妭鐐? : "鍙戦€佸埌褰撳墠鐢诲竷";
+  previewCard.innerHTML = `
+    <div class="preview-media preview-${node.assetType}">${node.assetType === "text" ? "鏂囨鎽樿" : node.assetType === "audio" ? "闊抽娉㈠舰" : ""}</div>
+    <div class="preview-title">${escapeHtml(node.name)}</div>
+    <div class="preview-meta">${escapeHtml(node.badge)} 路 ${escapeHtml(node.description)}</div>
+    <div class="preview-path">${escapeHtml(node.path || "")}</div>
+    ${renderTagChips(node)}
+    <div class="preview-actions">
+      <button class="preview-main" type="button">${action}</button>
+      <button class="preview-secondary" type="button">寮曠敤鍒?Agent</button>
+    </div>
+  `;
+  previewCard.querySelector(".preview-main").addEventListener("click", () => {
+    if (isCanvas) locateNode(node.id);
+    else sendToCanvas(node);
+  });
+  previewCard.querySelector(".preview-secondary").addEventListener("click", () => quoteToAgent(node));
+  previewCard.classList.remove("hidden");
+  positionPreview(anchorRow);
+}
+
+function positionPreview(anchorRow) {
+  const rowRect = anchorRow.getBoundingClientRect();
+  const panelRect = document.querySelector(".asset-panel").getBoundingClientRect();
+  const previewRect = previewCard.getBoundingClientRect();
+  const gap = 12;
+  const left = Math.max(panelRect.right + gap, rowRect.right + gap);
+  const maxTop = Math.max(12, window.innerHeight - previewRect.height - 12);
+  const top = Math.min(Math.max(12, rowRect.top - 10), maxTop);
+  previewCard.style.left = `${left}px`;
+  previewCard.style.top = `${top}px`;
+}
+
+function schedulePreviewHide() {
+  clearTimeout(previewHideTimer);
+  previewHideTimer = setTimeout(() => previewCard.classList.add("hidden"), 140);
+}
+
+function keepPreviewVisible() {
+  clearTimeout(previewHideTimer);
+}
+function showContextMenu(event, node) {
+  const items = getMenuItems(node);
+  contextMenu.innerHTML = "";
+  items.forEach(({ label, handler, danger, disabled }) => {
+    const button = document.createElement("button");
+    button.className = `menu-item ${danger ? "danger" : ""}`;
+    button.textContent = label;
+    button.disabled = Boolean(disabled);
+    button.addEventListener("click", () => {
+      if (disabled) return;
+      handler();
+      contextMenu.classList.add("hidden");
+    });
+    contextMenu.appendChild(button);
+  });
+  contextMenu.style.left = `${Math.min(event.clientX, window.innerWidth - 220)}px`;
+  contextMenu.style.top = `${Math.min(event.clientY, window.innerHeight - items.length * 36 - 16)}px`;
+  contextMenu.classList.remove("hidden");
+}
+
+function getMenuItems(node) {
+  const isFolder = node.type === "folder";
+  const items = [];
+  if (state.activeTab === "canvas") {
+    if (!isFolder) items.push({ label: "棰勮", handler: () => log(`宸叉墦寮€棰勮锛?{node.name}`) });
+    if (!isFolder) items.push({ label: "寮曠敤鍒?Agent", handler: () => quoteToAgent(node) });
+    if (!isFolder) items.push({ label: "缂栬緫鏍囩", handler: () => openTagModal(node) });
+    items.push({ label: "鍒涘缓鍓湰", handler: () => createCanvasDuplicate(node) });
+    items.push({ label: "鍔犲叆鎴戠殑璧勬簮搴?, handler: () => openAddToMineModal([node], "淇濆瓨鍒版垜鐨勮祫婧愬簱") });
+    items.push({ label: "鍔犲叆鍏变韩璧勬簮搴?, handler: () => openSharedModal([node], "鍔犲叆鍏变韩璧勬簮搴?) });
+    return items;
+  }
+
+  if (state.activeTab === "mine" && isFolder) items.push({ label: "鏂板缓鏂囦欢澶?, handler: () => openNewFolderModal(node) });
+  if (!isFolder) items.push({ label: "鍙戦€佸埌鐢诲竷", handler: () => sendToCanvas(node) });
+  if (!isFolder) items.push({ label: "寮曠敤鍒?Agent", handler: () => quoteToAgent(node) });
+  if (!isFolder) items.push({ label: "缂栬緫鏍囩", handler: () => openTagModal(node) });
+  const permission = getSharedProjectPermission(node);
+  items.push({ label: "鍒涘缓鍓湰", handler: () => duplicateLibraryNode(node), disabled: state.activeTab === "shared" && permission === "read" });
+  if (isFolder) items.push({ label: "鍙戦€佸埌鐢诲竷", handler: () => sendFolderToCanvas(node) });
+  if (state.activeTab === "shared" && !isFolder) items.push({ label: "鍙﹀瓨鍒版垜鐨?, handler: () => openAddToMineModal([node], "鍙﹀瓨鍒版垜鐨勮祫婧愬簱") });
+  items.push({ label: "涓嬭浇", handler: () => log(`宸叉ā鎷熶笅杞斤細${node.name}`), disabled: isFolder && state.activeTab === "mine" });
+
+  const canEditSharedAsset = state.activeTab !== "shared" || permission === "edit" || permission === "manage";
+  const canManageSharedFolder = state.activeTab !== "shared" || permission === "manage" || (!isFolder && permission === "edit");
+
+  items.push({ label: "閲嶅懡鍚?, handler: () => openRenameModal(node), disabled: node.meta?.fixed || (isFolder && !canManageSharedFolder) || (!isFolder && !canEditSharedAsset) });
+  items.push({ label: "绉诲姩", handler: () => openMoveModal(node), disabled: node.meta?.project || (isFolder && !canManageSharedFolder) || (!isFolder && !canEditSharedAsset) });
+  items.push({ label: "鍒犻櫎", handler: () => openDeleteModal(node), danger: true, disabled: node.meta?.fixed || node.meta?.project || (isFolder && !canManageSharedFolder) || (!isFolder && !canEditSharedAsset) });
+
+  if (state.activeTab === "shared" && node.meta?.project && permission === "manage") {
+    items.unshift({ label: "绠＄悊鎴愬憳", handler: () => log("宸叉ā鎷燂細鎵撳紑鎴愬憳鏉冮檺绠＄悊銆?) });
+    items.unshift({ label: "鏂板缓鏂囦欢澶?, handler: () => openNewFolderModal(node) });
+  }
+
+  return items;
+}
+
+function selectRow(node) {
+  state.selectedId = node.id;
+  document.querySelectorAll(".tree-row").forEach((row) => {
+    row.classList.toggle("selected", row.dataset.id === node.id);
+  });
+}
+
+
+function createCanvasDuplicate(sourceNode) {
+  const duplicate = cloneNodeForCanvas(sourceNode);
+  trees.canvas.push(duplicate);
+  appendCanvasDuplicate(duplicate);
+  state.canvasSelection = [duplicate.id];
+  updateCanvasSelectionView();
+  if (state.activeTab === "canvas") renderTree();
+  log(`宸插湪鐢诲竷鍒涘缓鍓湰锛?{duplicate.name}`);
+}
+
+function cloneNodeForCanvas(sourceNode) {
+  if (sourceNode.type === "folder") {
+    return folder(`canvas-dup-group-${state.folderCounter++}`, `${sourceNode.name}_鍓湰`, { group: true }, (sourceNode.children || []).map(cloneNodeForCanvas));
+  }
+  const duplicate = item(
+    `canvas-dup-${state.assetCounter++}`,
+    getSavedResourceName(sourceNode.name),
+    sourceNode.assetType || "file",
+    sourceNode.badge || "鍓湰",
+    sourceNode.description || "鐢诲竷鍓湰",
+    sourceNode.path || sourceNode.name
+  );
+  duplicate.tags = cloneTags(sourceNode);
+  return duplicate;
+}
+
+function appendCanvasDuplicate(node) {
+  const board = document.querySelector("#canvasBoard");
+  const element = document.createElement("div");
+  element.dataset.nodeId = node.id;
+  element.className = node.type === "folder" ? "canvas-group highlight" : `canvas-node highlight ${canvasClassForType(node.assetType)}`;
+  element.style.left = `${16 + Math.random() * 52}%`;
+  element.style.top = `${18 + Math.random() * 54}%`;
+  if (node.type === "folder") {
+    element.innerHTML = `<div class="group-title">${escapeHtml(node.name)}</div><div class="mini-node mini-video"></div><div class="mini-node mini-text"></div><div class="mini-node mini-audio"></div>`;
+  } else if (node.assetType === "image" || node.assetType === "video") {
+    element.innerHTML = `<div class="thumb ${node.assetType === "image" ? "image-a" : "video-a"}"></div><strong>${escapeHtml(node.name)}</strong><span>${escapeHtml(node.badge || "鐢诲竷鍓湰")}</span>`;
+  } else {
+    element.innerHTML = `<strong>${escapeHtml(node.name)}</strong><p>${escapeHtml(node.description || "鐢诲竷鍓湰")}</p>`;
+  }
+  document.querySelectorAll(".highlight").forEach((item) => item.classList.remove("highlight"));
+  board.appendChild(element);
+  bindCanvasElement(element);
+}
+
+function canvasClassForType(type) {
+  if (type === "image") return "image-node";
+  if (type === "video") return "video-node";
+  if (type === "text") return "text-node";
+  return "";
+}
+
+function duplicateLibraryNode(node) {
+  const record = findNodeWithParent(trees[state.activeTab], node.id);
+  if (!record) {
+    log("璧勬簮涓嶅瓨鍦紝鍙兘宸茶鍒犻櫎銆?);
+    return;
+  }
+  const siblings = record.parent ? record.parent.children : trees[state.activeTab];
+  const index = siblings.findIndex((item) => item.id === record.node.id);
+  const duplicate = cloneNodeForLibrary(record.node);
+  siblings.splice(index + 1, 0, duplicate);
+  state.selectedId = duplicate.id;
+  renderTree();
+  log(`宸插垱寤哄壇鏈細${duplicate.name}`);
+}
+
+function cloneNodeForLibrary(sourceNode) {
+  if (sourceNode.type === "folder") {
+    return folder(`${state.activeTab}-dup-folder-${state.folderCounter++}`, getSavedResourceName(sourceNode.name), { ...sourceNode.meta, fixed: false, project: false }, (sourceNode.children || []).map(cloneNodeForLibrary));
+  }
+  const duplicate = item(
+    `${state.activeTab}-dup-${state.assetCounter++}`,
+    getSavedResourceName(sourceNode.name),
+    sourceNode.assetType || "file",
+    sourceNode.badge || "鍓湰",
+    sourceNode.description || "璧勬簮鍓湰",
+    sourceNode.path || sourceNode.name,
+    sourceNode.permission
+  );
+  duplicate.tags = cloneTags(sourceNode);
+  return duplicate;
+}
+function locateNode(id) {
+  const map = { hero: "hero", hook: "hook", copy: "copy", voice: "group", "draft-1": "group" };
+  const target = document.querySelector(`[data-node-id="${map[id] || id}"]`);
+  if (!target) {
+    log("鏈壘鍒板彲瀹氫綅鐩爣锛岃妭鐐瑰彲鑳藉凡琚垹闄ゃ€?);
+    return;
+  }
+  document.querySelectorAll(".highlight").forEach((node) => node.classList.remove("highlight"));
+  target.classList.add("highlight");
+  target.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+  log(`宸插畾浣嶅埌鐢诲竷鑺傜偣锛?{target.dataset.nodeId}`);
+}
+
+function quoteToAgent(node) {
+  const source = state.activeTab === "canvas" ? "鐢诲竷" : state.activeTab === "mine" ? "鎴戠殑" : "鍏变韩";
+  const exists = state.agentRefs.some((item) => item.id === node.id && item.source === source);
+  if (exists) {
+    log(`Agent 宸插紩鐢ㄨ繃锛?{node.name}`);
+    return;
+  }
+  state.agentRefs.unshift({
+    id: node.id,
+    name: node.name,
+    type: node.assetType,
+    source,
+    path: node.path || node.name,
+    permission: state.activeTab === "shared" ? permissionText(getSharedProjectPermission(node)) : "-",
+    tags: node.tags || []
+  });
+  renderAgentRefs();
+  log(`宸插紩鐢ㄥ埌 Agent锛?{node.name}銆侫gent 鍙寜鏉ユ簮鍜岃矾寰勮皟鐢ㄨ绱犳潗銆俙);
+}
+
+function renderAgentRefs() {
+  agentCount.textContent = String(state.agentRefs.length);
+  agentEmpty.classList.toggle("hidden", state.agentRefs.length > 0);
+  agentList.innerHTML = state.agentRefs
+    .map((item) => `
+      <div class="agent-ref-item">
+        <div class="agent-ref-name">${escapeHtml(item.name)}</div>
+        <div class="agent-ref-path">${escapeHtml(item.source)} / ${escapeHtml(item.path)}${item.permission && item.permission !== "-" ? ` 路 ${escapeHtml(item.permission)}` : ""}</div>
+        <div class="agent-ref-tags">${escapeHtml((item.tags || []).join("銆?))}</div>
+      </div>
+    `)
+    .join("");
+}
+function sendToCanvas(node) {
+  const duplicate = cloneNodeForCanvas(node);
+  trees.canvas.push(duplicate);
+  appendCanvasDuplicate(duplicate);
+  state.canvasSelection = [duplicate.id];
+  updateCanvasSelectionView();
+  log(`宸插彂閫佸埌褰撳墠鐢诲竷锛?{node.name}銆傚彂閫佸悗涓虹嫭绔嬪壇鏈紝涓嶄笌婧愯祫婧愮粦瀹氥€俙);
+}
+
+function sendFolderToCanvas(node) {
+  const duplicate = cloneNodeForCanvas(node);
+  trees.canvas.push(duplicate);
+  appendCanvasDuplicate(duplicate);
+  state.canvasSelection = [duplicate.id];
+  updateCanvasSelectionView();
+  log(`宸插彂閫佹枃浠跺す鍒板綋鍓嶇敾甯冿細${node.name}銆傜郴缁熷凡鎸夋枃浠跺す鐢熸垚鐢诲竷缁勫壇鏈€俙);
+}
+
+function openNewFolderModal(anchorNode = null) {
+  const target = getCreateTarget(anchorNode);
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">鏂板缓鏂囦欢澶?/div>
+      <div class="modal-desc">灏嗗湪銆?{escapeHtml(target.label)}銆嶄笅鏂板缓涓€涓枃浠跺す銆?/div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="folderNameInput">鏂囦欢澶瑰悕绉?/label>
+        <input id="folderNameInput" type="text" value="鏂板缓鏂囦欢澶? autocomplete="off" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>鍒涘缓</button>
+    </div>
+  `;
+  modalLayer.classList.remove("hidden");
+  const input = modalCard.querySelector("#folderNameInput");
+  input.focus();
+  input.select();
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    const name = input.value.trim() || "鏂板缓鏂囦欢澶?;
+    const newId = `${state.activeTab}-custom-folder-${state.folderCounter++}`;
+    target.children.push(folder(newId, name, {}, []));
+    getExpanded().add(target.parentId || newId);
+    if (target.parentId) getExpanded().add(target.parentId);
+    state.selectedId = newId;
+    closeModal();
+    state.query = "";
+    searchInput.value = "";
+    state.filter = "all";
+    updateFilterOptions();
+    renderTree();
+    log(`宸插湪銆?{target.label}銆嶄笅鏂板缓鏂囦欢澶癸細${name}`);
+  });
+}
+
+
+function openRenameModal(node) {
+  const record = findNodeWithParent(trees[state.activeTab], node.id);
+  if (!record) {
+    log("璧勬簮涓嶅瓨鍦紝鍙兘宸茶鍒犻櫎銆?);
+    return;
+  }
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">閲嶅懡鍚?/div>
+      <div class="modal-desc">淇敼銆?{escapeHtml(record.node.name)}銆嶇殑鍚嶇О銆?/div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="renameInput">鍚嶇О</label>
+        <input id="renameInput" type="text" value="${escapeHtml(record.node.name)}" autocomplete="off" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>淇濆瓨</button>
+    </div>
+  `;
+  modalLayer.classList.remove("hidden");
+  const input = modalCard.querySelector("#renameInput");
+  input.focus();
+  input.select();
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    const nextName = input.value.trim();
+    if (!nextName) {
+      log("鍚嶇О涓嶈兘涓虹┖銆?);
+      return;
+    }
+    const siblings = record.parent ? record.parent.children : trees[state.activeTab];
+    const duplicate = siblings.some((item) => item.id !== record.node.id && item.name === nextName);
+    if (duplicate) {
+      log("鍚屼竴灞傜骇宸叉湁鍚屽悕鏂囦欢鎴栨枃浠跺す銆?);
+      return;
+    }
+    const oldName = record.node.name;
+    record.node.name = nextName;
+    state.agentRefs.forEach((item) => {
+      if (item.id === record.node.id) item.name = nextName;
+    });
+    renderAgentRefs();
+    closeModal();
+    hideLayers();
+    renderTree();
+    log(`宸查噸鍛藉悕锛?{oldName} -> ${nextName}`);
+  });
+}
+
+function openMoveModal(node) {
+  const record = findNodeWithParent(trees[state.activeTab], node.id);
+  if (!record) {
+    log("璧勬簮涓嶅瓨鍦紝鍙兘宸茶鍒犻櫎銆?);
+    return;
+  }
+  const folders = collectFolderOptions(trees[state.activeTab], record.node);
+  if (folders.length === 0) {
+    log("褰撳墠娌℃湁鍙Щ鍔ㄥ埌鐨勭洰鏍囨枃浠跺す銆?);
+    return;
+  }
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">閫夋嫨绉诲姩浣嶇疆</div>
+      <div class="modal-desc">绉诲姩銆?{escapeHtml(record.node.name)}銆嶅埌鐩爣鏂囦欢澶广€?/div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="moveTargetSelect">鐩爣鏂囦欢澶?/label>
+        <select id="moveTargetSelect">
+          ${folders.map((folder) => `<option value="${escapeHtml(folder.id)}">${escapeHtml(folder.label)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="modal-tip">绉诲姩鍚庝細绔嬪嵆鏇存柊褰撳墠鐩綍缁撴瀯锛涗笉浼氬奖鍝嶇敾甯冩垨鍏朵粬搴撻噷鐨勭嫭绔嬪壇鏈€?/div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>纭绉诲姩</button>
+    </div>
+  `;
+  modalLayer.classList.remove("hidden");
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    const targetId = modalCard.querySelector("#moveTargetSelect").value;
+    const latestRecord = findNodeWithParent(trees[state.activeTab], record.node.id);
+    const targetRecord = findNodeWithParent(trees[state.activeTab], targetId);
+    if (!latestRecord || !targetRecord?.node?.children) {
+      closeModal();
+      log("绉诲姩澶辫触锛岀洰鏍囦綅缃笉瀛樺湪銆?);
+      return;
+    }
+    const sourceSiblings = latestRecord.parent ? latestRecord.parent.children : trees[state.activeTab];
+    const sourceIndex = sourceSiblings.findIndex((item) => item.id === latestRecord.node.id);
+    if (sourceIndex >= 0) sourceSiblings.splice(sourceIndex, 1);
+    targetRecord.node.children.push(latestRecord.node);
+    getExpanded().add(targetRecord.node.id);
+    state.selectedId = latestRecord.node.id;
+    closeModal();
+    hideLayers();
+    renderTree();
+    log(`宸茬Щ鍔ㄥ埌锛?{targetRecord.node.name}`);
+  });
+}
+
+function collectFolderOptions(nodes, movingNode, trail = []) {
+  const options = [];
+  nodes.forEach((node) => {
+    if (node.type !== "folder") return;
+    const currentTrail = [...trail, node.name];
+    const movingSelf = node.id === movingNode.id;
+    const movingDescendant = movingNode.type === "folder" && containsNode(movingNode.children || [], node.id);
+    if (!movingSelf && !movingDescendant) {
+      options.push({ id: node.id, label: currentTrail.join(" / ") });
+    }
+    options.push(...collectFolderOptions(node.children || [], movingNode, currentTrail));
+  });
+  return options;
+}
+
+function containsNode(nodes, id) {
+  return nodes.some((node) => node.id === id || containsNode(node.children || [], id));
+}
+function getCreateTarget(anchorNode = null) {
+  const selected = anchorNode || findNodeWithParent(trees[state.activeTab], state.selectedId)?.node;
+  const found = selected ? findNodeWithParent(trees[state.activeTab], selected.id) : null;
+
+  if (found?.node?.type === "folder") {
+    return { children: found.node.children, label: found.node.name, parentId: found.node.id };
+  }
+
+  if (found?.parent) {
+    return { children: found.parent.children, label: found.parent.name, parentId: found.parent.id };
+  }
+
+  return { children: trees[state.activeTab], label: currentTabName(), parentId: null };
+}
+
+function findNodeWithParent(nodes, id, parent = null) {
+  if (!id) return null;
+  for (const node of nodes) {
+    if (node.id === id) return { node, parent };
+    if (node.children) {
+      const found = findNodeWithParent(node.children, id, node);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function currentTabName() {
+  if (state.activeTab === "mine") return "鎴戠殑涓€绾х洰褰?;
+  if (state.activeTab === "shared") return getActiveSharedProject()?.name || "鍏变韩搴撳垪琛?;
+  return "鐢诲竷涓€绾х洰褰?;
+}
+function openPositionModal(title, desc, actionText) {
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">${escapeHtml(title)}</div>
+      <div class="modal-desc">${escapeHtml(desc)}</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="targetCategory">璧勬簮鍒嗙被</label>
+        <select id="targetCategory">
+          <option>瑙掕壊</option>
+          <option>鎴愮墖绱犳潗闆嗗悎</option>
+          <option>鍝佺墝/娓犻亾绱犳潗</option>
+          <option>鏂囨/瀛楀箷</option>
+          <option>鍏朵粬</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="targetFolder">椤圭洰/閫氱敤鏂囦欢澶?/label>
+        <select id="targetFolder">
+          <option>澶╅緳鍏儴2</option>
+          <option>鐑姹熸箹</option>
+          <option>閫氱敤</option>
+          <option>+ 鏂板缓鏂囦欢澶?/option>
+        </select>
+      </div>
+      <div class="modal-tip">淇濆瓨鍚庣敓鎴愪釜浜鸿祫浜у壇鏈紱鐩爣璺緞浠庣湡瀹炰竴绾ф枃浠跺す寮€濮嬭褰曪紝涓嶅寘鍚?Tab 鍚嶇О銆?/div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>${escapeHtml(actionText)}</button>
+    </div>
+  `;
+  bindModalButtons(`${actionText}鎴愬姛锛屽凡鐢熸垚鐙珛鍓湰銆俙);
+}
+
+function getCanvasSelectionForSave() {
+  return state.canvasSelection
+    .map((id) => getCanvasResourceByDomId(id) || findNodeWithParent(trees.canvas, id)?.node)
+    .filter(Boolean);
+}
+
+function openAddToMineModal(sourceNodes, title = "淇濆瓨鍒版垜鐨勮祫婧愬簱") {
+  if (!sourceNodes.length) {
+    log("褰撳墠娌℃湁鍙繚瀛樼殑鐢诲竷鍐呭銆?);
+    return;
+  }
+  const categories = getMineCategories();
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">${escapeHtml(title)}</div>
+      <div class="modal-desc">灏?${sourceNodes.length} 涓唴瀹瑰鍒朵负涓汉璧勪骇鍓湰銆?/div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="mineCategorySelect">璧勬簮鍒嗙被</label>
+        <select id="mineCategorySelect">
+          ${categories.map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="mineFolderSelect">鐩爣鏂囦欢澶?/label>
+        <select id="mineFolderSelect"></select>
+      </div>
+      <div class="form-field hidden" id="mineNewFolderField">
+        <label for="mineNewFolderInput">鏂版枃浠跺す鍚嶇О</label>
+        <input id="mineNewFolderInput" type="text" value="澶╅緳鍏儴2" autocomplete="off" />
+      </div>
+      <div class="modal-tip">淇濆瓨鍚庝細鍦ㄢ€滄垜鐨勨€濅腑鐢熸垚鐙珛鍓湰锛屼笉褰卞搷鐢诲竷鍘熻妭鐐广€?/div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>纭淇濆瓨</button>
+    </div>
+  `;
+  modalLayer.classList.remove("hidden");
+  const categorySelect = modalCard.querySelector("#mineCategorySelect");
+  const folderSelect = modalCard.querySelector("#mineFolderSelect");
+  const newFolderField = modalCard.querySelector("#mineNewFolderField");
+  const newFolderInput = modalCard.querySelector("#mineNewFolderInput");
+
+  const syncFolderOptions = () => {
+    const category = findNodeWithParent(trees.mine, categorySelect.value)?.node;
+    const folders = (category?.children || []).filter((node) => node.type === "folder");
+    folderSelect.innerHTML = folders
+      .map((node) => `<option value="${escapeHtml(node.id)}">${escapeHtml(node.name)}</option>`)
+      .join("") + '<option value="__new__">+ 鏂板缓鏂囦欢澶?/option>';
+    newFolderField.classList.toggle("hidden", folderSelect.value !== "__new__");
+  };
+
+  categorySelect.addEventListener("change", syncFolderOptions);
+  folderSelect.addEventListener("change", () => {
+    newFolderField.classList.toggle("hidden", folderSelect.value !== "__new__");
+    if (folderSelect.value === "__new__") {
+      newFolderInput.focus();
+      newFolderInput.select();
+    }
+  });
+  syncFolderOptions();
+
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    const category = findNodeWithParent(trees.mine, categorySelect.value)?.node;
+    if (!category) {
+      log("鐩爣鍒嗙被涓嶅瓨鍦ㄣ€?);
+      return;
+    }
+    let targetFolder = findNodeWithParent(trees.mine, folderSelect.value)?.node;
+    if (folderSelect.value === "__new__") {
+      const folderName = newFolderInput.value.trim();
+      if (!folderName) {
+        log("鏂版枃浠跺す鍚嶇О涓嶈兘涓虹┖銆?);
+        return;
+      }
+      targetFolder = folder(`mine-saved-folder-${state.folderCounter++}`, folderName, {}, []);
+      category.children.push(targetFolder);
+      state.expandedByTab.mine.add(category.id);
+    }
+    if (!targetFolder) {
+      log("鐩爣鏂囦欢澶逛笉瀛樺湪銆?);
+      return;
+    }
+    const savedNodes = sourceNodes.map((sourceNode) => cloneNodeForMine(sourceNode, targetFolder, category.name));
+    targetFolder.children.push(...savedNodes);
+    state.expandedByTab.mine.add(category.id);
+    state.expandedByTab.mine.add(targetFolder.id);
+    state.activeTab = "mine";
+    state.query = "";
+    state.filter = "all";
+    if (state.activeTab !== "shared") state.sharedProjectId = null;
+    searchInput.value = "";
+    updateFilterOptions();
+    state.selectedId = savedNodes[0]?.id || targetFolder.id;
+    closeModal();
+    hideLayers();
+    render();
+    log(`宸蹭繚瀛樺埌鎴戠殑璧勬簮搴擄細${category.name} / ${targetFolder.name}锛屽叡 ${savedNodes.length} 涓壇鏈€俙);
+  });
+}
+
+function getMineCategories() {
+  return trees.mine.filter((node) => node.type === "folder");
+}
+
+function cloneNodeForMine(sourceNode, targetFolder, categoryName) {
+  const path = `${categoryName} / ${targetFolder.name}`;
+  if (sourceNode.type === "folder") {
+    return folder(`mine-saved-folder-${state.folderCounter++}`, `${sourceNode.name}_鍓湰`, {}, (sourceNode.children || []).map((child) => cloneNodeForMine(child, targetFolder, categoryName)));
+  }
+  const duplicate = item(
+    `mine-saved-${state.assetCounter++}`,
+    getSavedResourceName(sourceNode.name),
+    sourceNode.assetType || "file",
+    sourceNode.badge || "鍓湰",
+    sourceNode.description || "浠庣敾甯冧繚瀛樼殑涓汉鍓湰",
+    path
+  );
+  duplicate.tags = cloneTags(sourceNode);
+  return duplicate;
+}
+
+function getSavedResourceName(name) {
+  const dotIndex = name.lastIndexOf(".");
+  if (dotIndex > 0) return `${name.slice(0, dotIndex)}_鍓湰${name.slice(dotIndex)}`;
+  return `${name}_鍓湰`;
+}
+function openSharedModal(sourceNodes = getCanvasSelectionForSave(), title = "鍔犲叆鍏变韩璧勬簮搴?) {
+  const nodes = Array.isArray(sourceNodes) ? sourceNodes : getCanvasSelectionForSave();
+  if (!nodes.length) {
+    log("褰撳墠娌℃湁鍙姞鍏ュ叡浜殑鍐呭銆?);
+    return;
+  }
+  const projects = trees.shared.filter((node) => node.type === "folder" && node.meta?.permission !== "read");
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">${escapeHtml(title)}</div>
+      <div class="modal-desc">灏?${nodes.length} 涓唴瀹瑰鍒跺埌鏈夋潈闄愮殑椤圭洰鍏变韩璧勬簮搴撱€?/div>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="sharedProjectSelect">椤圭洰璧勬簮搴?/label>
+        <select id="sharedProjectSelect">
+          ${projects.map((project) => `<option value="${escapeHtml(project.id)}">${escapeHtml(project.name)} 路 ${permissionText(project.meta?.permission)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="sharedCategorySelect">璧勪骇鍒嗙被</label>
+        <select id="sharedCategorySelect"></select>
+      </div>
+      <div class="modal-tip">椤圭洰璧勬簮搴撶敱鐢诲竷椤圭洰鏄犲皠鐢熸垚锛屼笉鑳藉湪杩欓噷鎵嬪姩鏂板缓锛涚‘璁ゅ悗浼氱敓鎴愬叡浜壇鏈紝鍘熺敾甯冨唴瀹逛繚鎸佷笉鍙樸€?/div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>纭鍔犲叆</button>
+    </div>
+  `;
+  modalLayer.classList.remove("hidden");
+  const projectSelect = modalCard.querySelector("#sharedProjectSelect");
+  const categorySelect = modalCard.querySelector("#sharedCategorySelect");
+
+  const syncSharedCategories = () => {
+    const project = findNodeWithParent(trees.shared, projectSelect.value)?.node;
+    const categories = (project?.children || []).filter((node) => node.type === "folder");
+    categorySelect.innerHTML = categories.map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`).join("");
+  };
+
+  projectSelect.addEventListener("change", syncSharedCategories);
+  syncSharedCategories();
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    const project = findNodeWithParent(trees.shared, projectSelect.value)?.node;
+    const category = findNodeWithParent(trees.shared, categorySelect.value)?.node;
+    if (!project || !category) {
+      log("鍏变韩鐩爣浣嶇疆涓嶅瓨鍦ㄣ€?);
+      return;
+    }
+    const savedNodes = nodes.map((node) => cloneNodeForShared(node, project.name, category.name, project.meta?.permission));
+    category.children.push(...savedNodes);
+    state.expandedByTab.shared.add(category.id);
+    state.activeTab = "shared";
+    state.sharedProjectId = project.id;
+    state.query = "";
+    state.filter = "all";
+    if (state.activeTab !== "shared") state.sharedProjectId = null;
+    searchInput.value = "";
+    updateFilterOptions();
+    state.selectedId = savedNodes[0]?.id || category.id;
+    closeModal();
+    hideLayers();
+    render();
+    log(`宸插姞鍏ュ叡浜祫婧愬簱锛?{project.name} / ${category.name}锛屽叡 ${savedNodes.length} 涓壇鏈€俙);
+  });
+}
+
+function cloneNodeForShared(sourceNode, projectName, categoryName, permission = "edit") {
+  if (sourceNode.type === "folder") {
+    return folder(`shared-saved-folder-${state.sharedCounter++}`, `${sourceNode.name}_鍓湰`, { permission }, (sourceNode.children || []).map((child) => cloneNodeForShared(child, projectName, categoryName, permission)));
+  }
+  const duplicate = item(
+    `shared-saved-${state.sharedCounter++}`,
+    getSavedResourceName(sourceNode.name),
+    sourceNode.assetType || "file",
+    sourceNode.badge || "鍓湰",
+    sourceNode.description || "浠庣敾甯冨姞鍏ュ叡浜殑鍓湰",
+    `${projectName} / ${categoryName}`,
+    permission
+  );
+  duplicate.tags = cloneTags(sourceNode);
+  return duplicate;
+}
+
+function permissionText(permission) {
+  if (permission === "manage") return "鍙鐞?;
+  if (permission === "edit") return "鍙紪杈?;
+  return "鍙槄璇?;
+}
+
+function openDeleteModal(node) {
+  modalCard.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">纭鍒犻櫎</div>
+      <div class="modal-desc">鍒犻櫎 ${escapeHtml(node.name)} 鍓嶉渶瑕佷簩娆＄‘璁ゃ€?/div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tip">鍒犻櫎涓嶄細褰卞搷鐢诲竷涓婄殑鐙珛鑺傜偣锛屼篃涓嶄細褰卞搷鍏朵粬搴撻噷鐨勭嫭绔嬪壇鏈€?/div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-action" type="button" data-close>鍙栨秷</button>
+      <button class="modal-action primary" type="button" data-confirm>纭鍒犻櫎</button>
+    </div>
+  `;
+    modalLayer.classList.remove("hidden");
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    const record = findNodeWithParent(trees[state.activeTab], node.id);
+    if (!record) {
+      closeModal();
+      log("璧勬簮涓嶅瓨鍦紝鍙兘宸茶鍒犻櫎銆?);
+      return;
+    }
+    const siblings = record.parent ? record.parent.children : trees[state.activeTab];
+    const index = siblings.findIndex((item) => item.id === record.node.id);
+    if (index >= 0) siblings.splice(index, 1);
+    getExpanded().delete(record.node.id);
+    state.selectedId = null;
+    closeModal();
+    hideLayers();
+    renderTree();
+    log(`宸插垹闄わ細${node.name}`);
+  });
+}
+
+function bindModalButtons(message) {
+  modalLayer.classList.remove("hidden");
+  modalCard.querySelector("[data-close]").addEventListener("click", closeModal);
+  modalCard.querySelector("[data-confirm]").addEventListener("click", () => {
+    closeModal();
+    log(message);
+  });
+}
+
+function closeModal() {
+  modalLayer.classList.add("hidden");
+}
+
+function hideLayers() {
+  previewCard.classList.add("hidden");
+  contextMenu.classList.add("hidden");
+  closeModal();
+}
+
+function log(message) {
+  toastLog.textContent = message;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+render();
+renderAgentRefs();
+initCanvasInteractions();
+
+
+
+
+
+

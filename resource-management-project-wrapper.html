@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>资源管理项目化 Wrapper</title>
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: auto;
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        background: #f3f5f8;
+      }
+      .wrap {
+        display: grid;
+        grid-template-columns: minmax(1060px, 1fr) 340px;
+        height: 100vh;
+        min-width: 1400px;
+      }
+      .frame {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #fff;
+      }
+      .panel {
+        min-width: 0;
+        border-left: 1px solid #d8e0eb;
+        background: #fff;
+        overflow: auto;
+        min-height: 100vh;
+      }
+      .head {
+        padding: 18px;
+        border-bottom: 1px solid #d8e0eb;
+      }
+      .title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #1d2738;
+      }
+      .subtitle {
+        margin-top: 4px;
+        color: #667085;
+        font-size: 12px;
+      }
+      .section {
+        padding: 16px 18px;
+        border-bottom: 1px solid #eef2f6;
+      }
+      .section-title {
+        margin-bottom: 10px;
+        font-weight: 800;
+        color: #1d2738;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: #dff2ee;
+        color: #0d6a61;
+      }
+      .flow {
+        display: grid;
+        gap: 8px;
+      }
+      .flow-step {
+        padding: 10px;
+        border: 1px solid #d8e0eb;
+        border-radius: 6px;
+        background: #f8fafc;
+        font-size: 13px;
+        color: #1d2738;
+      }
+      .muted {
+        color: #667085;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <iframe class="frame" src="./index.html" title="原画布与我的交互" style="min-width: 1100px;"></iframe>
+      <aside class="panel">
+        <header class="head">
+          <div class="title">项目</div>
+          <div class="subtitle">项目层保留在右侧，左侧直接使用原画布 / 我的交互</div>
+        </header>
+        <section class="section">
+          <div class="section-title">P0 闭环</div>
+          <div class="flow">
+            <div class="flow-step">1. 画布选中节点或组</div>
+            <div class="flow-step">2. 保存到我的或项目</div>
+            <div class="flow-step">3. 在项目里按文件夹和权限浏览</div>
+            <div class="flow-step">4. 再发送回当前画布</div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-title">项目成员</div>
+          <div class="muted">可阅读、可编辑、可管理</div>
+        </section>
+        <section class="section">
+          <div class="section-title">说明</div>
+          <div class="muted">左侧是原版画布 / 我的 / 共享交互，未做重写。右侧是项目化补充信息。</div>
+        </section>
+      </aside>
+    </main>
+  </body>
+</html>

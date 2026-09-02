@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>资源管理项目化 Demo</title>
+    <style>
+      :root {
+        --bg: #f3f5f8;
+        --panel: #ffffff;
+        --panel-soft: #f8fafc;
+        --ink: #1d2738;
+        --muted: #667085;
+        --line: #d8e0eb;
+        --brand: #16786f;
+        --brand-2: #e1f2ef;
+        --blue: #2968a8;
+        --yellow: #8a6100;
+        --danger: #b42318;
+        --shadow: 0 18px 42px rgba(31, 42, 68, 0.16);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        height: 100vh;
+        color: var(--ink);
+        background: var(--bg);
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        overflow: hidden;
+      }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+
+      .app {
+        display: grid;
+        grid-template-columns: 392px minmax(680px, 1fr) 340px;
+        height: 100vh;
+      }
+
+      .side, .inspector {
+        min-height: 0;
+        background: var(--panel);
+        border-color: var(--line);
+      }
+      .side {
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--line);
+      }
+      .inspector {
+        border-left: 1px solid var(--line);
+        overflow: auto;
+      }
+
+      .head {
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .title {
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .subtitle {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        padding: 10px 12px 0;
+      }
+      .tab {
+        height: 38px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        color: var(--muted);
+        background: transparent;
+        font-weight: 700;
+      }
+      .tab.active {
+        color: var(--brand);
+        border-bottom-color: var(--brand);
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 12px;
+      }
+      .search {
+        width: 100%;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        outline: none;
+      }
+      .search:focus { border-color: var(--brand); }
+
+      .icon-btn, .text-btn, .primary, .ghost {
+        height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--ink);
+      }
+      .icon-btn { width: 36px; font-weight: 800; }
+      .text-btn { padding: 0 12px; }
+      .primary {
+        padding: 0 14px;
+        color: #fff;
+        border-color: var(--brand);
+        background: var(--brand);
+      }
+      .ghost {
+        padding: 0 12px;
+        color: var(--brand);
+        border-color: #bddbd6;
+        background: #f0faf8;
+      }
+      .danger { color: var(--danger); }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .content {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 4px 10px 16px;
+      }
+
+      .project-card {
+        margin: 8px 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .project-cover {
+        min-height: 78px;
+        padding: 14px;
+        color: #fff;
+        background:
+          linear-gradient(135deg, rgba(29, 39, 56, 0.94), rgba(22, 120, 111, 0.88)),
+          radial-gradient(circle at 82% 20%, rgba(255,255,255,0.28), transparent 32%);
+      }
+      .project-cover strong { display: block; font-size: 18px; }
+      .project-cover span { display: block; margin-top: 4px; font-size: 12px; opacity: 0.78; }
+      .project-meta {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        padding: 10px 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .pill.manage { color: #7a5500; background: #fff2cc; }
+      .pill.edit { color: #175a91; background: #e5f1ff; }
+      .pill.read { color: #59636f; background: #edf0f4; }
+      .pill.p0 { color: #0d6a61; background: #dff2ee; }
+      .pill.p1 { color: #734d00; background: #fff2cc; }
+      .pill.p2 { color: #59636f; background: #edf0f4; }
+
+      .project-actions, .row-actions {
+        display: flex;
+        gap: 8px;
+        padding: 0 12px 12px;
+      }
+
+      .project-header {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 4px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .back {
+        width: 32px;
+        height: 32px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        font-size: 22px;
+      }
+      .project-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 800;
+      }
+      .project-sub {
+        margin-top: 2px;
+        overflow: hidden;
+        color: var(--muted);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+      }
+
+      .tree-row {
+        display: grid;
+        grid-template-columns: 22px 22px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 6px;
+        min-height: 38px;
+        padding: 4px 8px;
+        border-radius: 6px;
+      }
+      .tree-row:hover, .tree-row.selected { background: #f0f4f8; }
+      .tree-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+      }
+      .muted { color: var(--muted); }
+
+      .stage {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
+        padding: 18px;
+      }
+      .canvas-topbar {
+        position: absolute;
+        left: 32px;
+        top: 28px;
+        z-index: 4;
+        display: flex;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .canvas-chip {
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgba(255,255,255,0.92);
+        color: #365068;
+        font-size: 12px;
+      }
+      .canvas {
+        position: relative;
+        height: calc(100vh - 36px);
+        min-height: 600px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background:
+          linear-gradient(#dfe6ef 1px, transparent 1px),
+          linear-gradient(90deg, #dfe6ef 1px, transparent 1px),
+          #fbfdff;
+        background-size: 28px 28px;
+      }
+      .node, .group-node {
+        position: absolute;
+        width: 190px;
+        padding: 12px;
+        border: 1px solid #cdd7e4;
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 8px 22px rgba(22, 32, 51, 0.08);
+        cursor: grab;
+        user-select: none;
+      }
+      .node.dragging, .group-node.dragging { cursor: grabbing; z-index: 8; }
+      .node.selected, .group-node.selected {
+        border-color: var(--brand);
+        outline: 3px solid rgba(22, 120, 111, 0.22);
+      }
+      .node strong, .group-node strong { display: block; }
+      .node span, .node p {
+        display: block;
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .thumb {
+        height: 84px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        background:
+          radial-gradient(circle at 28% 28%, #ffe6a7 0 16%, transparent 17%),
+          linear-gradient(135deg, #9fd5ce, #f2c36f 58%, #d58269);
+      }
+      .video-thumb {
+        background:
+          linear-gradient(135deg, rgba(40, 54, 79, 0.92), rgba(85, 184, 169, 0.88)),
+          repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,0.22) 18px 20px);
+      }
+      .mini-grid {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .mini {
+        width: 42px;
+        height: 42px;
+        border-radius: 6px;
+        background: #e1ecf4;
+      }
+      .agent-box {
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        z-index: 3;
+        width: 286px;
+        max-height: 290px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.96);
+        box-shadow: 0 12px 32px rgba(23, 32, 51, 0.12);
+      }
+      .agent-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .agent-list {
+        display: grid;
+        gap: 6px;
+        max-height: 206px;
+        overflow: auto;
+        padding: 10px;
+      }
+      .agent-item {
+        padding: 8px;
+        border: 1px solid #d9e9e5;
+        border-radius: 6px;
+        background: #f6faf9;
+      }
+      .agent-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .agent-path {
+        margin-top: 3px;
+        overflow: hidden;
+        color: var(--muted);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+      }
+      .agent-tags {
+        margin-top: 4px;
+        overflow: hidden;
+        color: var(--brand);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+      }
+      .activity-box {
+        position: absolute;
+        right: 32px;
+        bottom: 32px;
+        width: min(320px, calc(100% - 64px));
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 12px 32px rgba(23, 32, 51, 0.12);
+      }
+      .activity-title { margin-bottom: 6px; font-weight: 800; }
+      .activity-log {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .inspector-section {
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-weight: 800;
+      }
+      .flow {
+        display: grid;
+        gap: 8px;
+      }
+      .flow-step {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel-soft);
+        font-size: 13px;
+      }
+      .member {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        min-height: 36px;
+        font-size: 13px;
+      }
+      .log {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .preview {
+        position: fixed;
+        z-index: 20;
+        width: 300px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+      .preview-media {
+        height: 130px;
+        border-radius: 6px;
+        background:
+          radial-gradient(circle at 28% 28%, #ffe6a7 0 16%, transparent 17%),
+          linear-gradient(135deg, #9fd5ce, #f2c36f 58%, #d58269);
+      }
+      .preview-title { margin-top: 10px; font-weight: 800; }
+      .preview-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .modal-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(18, 27, 43, 0.36);
+      }
+      .modal {
+        width: min(560px, 100%);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+      .modal-head, .modal-body, .modal-foot { padding: 16px; }
+      .modal-head { border-bottom: 1px solid var(--line); }
+      .modal-foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        border-top: 1px solid var(--line);
+      }
+      .field { display: grid; gap: 6px; margin-bottom: 12px; }
+      .field label { color: var(--muted); font-size: 12px; }
+      .field input, .field select {
+        width: 100%;
+        height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .tip {
+        padding: 10px;
+        border: 1px solid #f2dfa7;
+        border-radius: 6px;
+        color: #6e520e;
+        background: #fff8e4;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .hidden { display: none !important; }
+
+      @media (max-width: 1180px) {
+        .app { grid-template-columns: 360px minmax(520px, 1fr); }
+        .inspector { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <aside class="side">
+        <header class="head">
+          <div class="title">资源管理 Demo</div>
+          <div class="subtitle" id="subtitle">画布、我的、项目之间跑通资源闭环</div>
+        </header>
+        <nav class="tabs">
+          <button class="tab active" data-tab="canvas" type="button">画布</button>
+          <button class="tab" data-tab="mine" type="button">我的</button>
+          <button class="tab" data-tab="project" type="button">项目</button>
+        </nav>
+        <section class="toolbar">
+          <input class="search" id="search" type="search" placeholder="搜索当前内容" />
+          <button class="icon-btn" id="createBtn" type="button" title="新建">+</button>
+        </section>
+        <section class="content" id="content"></section>
+      </aside>
+
+      <section class="stage">
+        <div class="canvas" id="canvas">
+          <div class="canvas-topbar">
+            <div class="canvas-chip" id="canvasSelectionLabel">已选中：萧峰_立绘</div>
+            <div class="canvas-chip">当前画布实时映射</div>
+          </div>
+          <div class="node selected" data-node="hero" style="left: 8%; top: 14%">
+            <div class="thumb"></div>
+            <strong>萧峰_立绘</strong>
+            <span>图片节点</span>
+          </div>
+          <div class="node" data-node="hook" style="left: 46%; top: 18%">
+            <div class="thumb video-thumb"></div>
+            <strong>高福利开局_A段钩子</strong>
+            <span>视频节点 · 15s</span>
+          </div>
+          <div class="node" data-node="copy" style="left: 23%; top: 56%">
+            <strong>口播文案_v2</strong>
+            <p>开局送满级福利，三分钟爽刷 Boss。</p>
+          </div>
+          <div class="group-node" data-node="group" style="left: 62%; top: 54%">
+            <strong>成片素材集合_高福利开局</strong>
+            <div class="mini-grid">
+              <div class="mini"></div>
+              <div class="mini"></div>
+              <div class="mini"></div>
+            </div>
+          </div>
+          <aside class="agent-box">
+            <div class="agent-head">
+              <div>
+                <div style="font-weight: 800">Agent 引用</div>
+                <div class="muted" style="margin-top: 3px; font-size: 12px">引用素材会进入可调用上下文</div>
+              </div>
+              <span class="pill p0" id="agentCount">1</span>
+            </div>
+            <div class="agent-list" id="agentList">
+              <div class="agent-item">
+                <div class="agent-name">萧峰_立绘</div>
+                <div class="agent-path">画布 / 当前节点</div>
+                <div class="agent-tags">角色 · 立绘</div>
+              </div>
+            </div>
+          </aside>
+          <aside class="activity-box">
+            <div class="activity-title">操作反馈</div>
+            <div class="activity-log" id="activityLog">先在画布中选中资源，再保存到我的或项目；项目资源可以再发送回当前画布。</div>
+          </aside>
+        </div>
+      </section>
+
+      <aside class="inspector">
+        <section class="inspector-section">
+          <div class="section-title">当前闭环 <span class="pill p0">P0</span></div>
+          <div class="flow">
+            <div class="flow-step">1. 画布选中资源</div>
+            <div class="flow-step">2. 保存到我的或项目</div>
+            <div class="flow-step">3. 在项目中按文件夹和权限浏览</div>
+            <div class="flow-step">4. 从项目发送回当前画布</div>
+          </div>
+        </section>
+        <section class="inspector-section">
+          <div class="section-title">项目成员</div>
+          <div id="members"></div>
+        </section>
+        <section class="inspector-section">
+          <div class="section-title">操作反馈</div>
+          <div class="log" id="log"></div>
+        </section>
+      </aside>
+    </main>
+
+    <div class="preview hidden" id="preview"></div>
+    <div class="modal-layer hidden" id="modalLayer">
+      <div class="modal" id="modal"></div>
+    </div>
+
+    <script>
+      const defaultFolders = ["角色", "怪物/Boss", "宠物/坐骑", "场景/地图", "道具/武器", "UI", "成片素材集合", "达人素材", "品牌/渠道", "其他"];
+      const canvasAssets = [
+        { id: "hero", name: "萧峰_立绘", type: "图片", desc: "当前画布图片节点", tags: ["角色", "立绘"] },
+        { id: "hook", name: "高福利开局_A段钩子", type: "视频", desc: "当前画布视频节点", tags: ["A段钩子", "高福利"] },
+        { id: "copy", name: "口播文案_v2", type: "文本", desc: "当前画布文本节点", tags: ["口播", "文案"] },
+        { id: "group", name: "成片素材集合_高福利开局", type: "组", desc: "当前画布分组", tags: ["成片", "组合"] }
+      ];
+      const state = {
+        tab: "canvas",
+        selectedCanvas: "hero",
+        selectedProject: null,
+        selectedItem: null,
+        query: "",
+        counter: 1,
+        drag: null,
+        activity: ["先在画布中选中资源，再保存到我的或项目；项目资源可以再发送回当前画布。"],
+        my: [
+          folder("角色", [asset("三视图-异能者", "图片", "个人沉淀角色素材")]),
+          folder("成片素材集合", [asset("高福利开局_最终成片", "视频", "个人剪辑成片")]),
+          folder("品牌/渠道", [asset("TapTap渠道KV_竖版", "图片", "渠道投放 KV")])
+        ],
+        projects: [
+          project("p1", "天龙八部2", "买量视频常用素材项目", "manage", [
+            folder("角色", [asset("萧峰_三视图", "图片", "项目官方角色素材")]),
+            folder("UI", [asset("登录页_按钮", "图片", "项目 UI 素材")]),
+            folder("成片素材集合", [asset("高福利开局_15s", "视频", "项目共用成片")])
+          ]),
+          project("p2", "热血江湖", "直播切片素材项目", "edit", [
+            folder("角色", [asset("门派主角_立绘", "图片", "直播切片主角素材")]),
+            folder("品牌/渠道", [asset("直播封面_模板", "图片", "直播渠道素材")])
+          ]),
+          project("p3", "斗罗大陆", "渠道素材只读项目", "read", [
+            folder("角色", [asset("唐三_立绘", "图片", "只读角色素材")]),
+            folder("品牌/渠道", [asset("应用宝渠道KV", "图片", "只读渠道素材")])
+          ])
+        ],
+        logs: ["Demo 已就绪：先在画布选中资源，再保存到项目。"]
+      };
+
+      function folder(name, children = []) {
+        return { id: "f-" + Math.random().toString(36).slice(2), kind: "folder", name, children };
+      }
+      function asset(name, type, desc) {
+        return { id: "a-" + Math.random().toString(36).slice(2), kind: "asset", name, type, desc, tags: [type] };
+      }
+      function project(id, name, desc, role, folders) {
+        const folderNames = folders.map(f => f.name);
+        defaultFolders.forEach(name => {
+          if (!folderNames.includes(name)) folders.push(folder(name));
+        });
+        return {
+          id, name, desc, role, folders,
+          members: [
+            { name: "你", role },
+            { name: "项目管理员", role: "manage" },
+            { name: "视频设计师", role: "edit" }
+          ]
+        };
+      }
+      function roleLabel(role) {
+        return role === "manage" ? "可管理" : role === "edit" ? "可编辑" : "可阅读";
+      }
+      function roleClass(role) {
+        return role === "manage" ? "manage" : role === "edit" ? "edit" : "read";
+      }
+      function canEdit(role) {
+        return role === "edit" || role === "manage";
+      }
+      function canManage(role) {
+        return role === "manage";
+      }
+      function esc(v) {
+        return String(v ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+      }
+      function addLog(text) {
+        state.logs.unshift(text);
+        state.logs = state.logs.slice(0, 5);
+        renderLog();
+      }
+      function pushActivity(text) {
+        state.activity.unshift(text);
+        state.activity = state.activity.slice(0, 5);
+        renderActivity();
+      }
+
+      const content = document.querySelector("#content");
+      const search = document.querySelector("#search");
+      const createBtn = document.querySelector("#createBtn");
+      const preview = document.querySelector("#preview");
+      const modalLayer = document.querySelector("#modalLayer");
+      const modal = document.querySelector("#modal");
+
+      document.querySelectorAll(".tab").forEach(btn => {
+        btn.onclick = () => {
+          state.tab = btn.dataset.tab;
+          state.selectedProject = null;
+          state.query = "";
+          search.value = "";
+          hidePreview();
+          render();
+        };
+      });
+      search.oninput = e => {
+        state.query = e.target.value.trim();
+        renderContent();
+      };
+      createBtn.onclick = () => {
+        if (state.tab === "project" && !state.selectedProject) openCreateProjectModal();
+        else if (state.tab === "mine") openCreateMineFolderModal();
+        else if (state.tab === "project" && state.selectedProject) openCreateProjectFolderModal();
+      };
+      document.querySelectorAll("[data-node]").forEach(node => {
+        node.onclick = () => {
+          state.selectedCanvas = node.dataset.node;
+          document.querySelectorAll("[data-node]").forEach(n => n.classList.toggle("selected", n.dataset.node === state.selectedCanvas));
+          addLog("已选中画布资源：" + getSelectedCanvasAsset().name);
+        };
+      });
+      modalLayer.onclick = e => {
+        if (e.target === modalLayer) closeModal();
+      };
+
+      function render() {
+        document.querySelectorAll(".tab").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === state.tab));
+        document.querySelector("#subtitle").textContent =
+          state.tab === "canvas" ? "当前画布资源导航" :
+          state.tab === "mine" ? "个人长期资源沉淀" :
+          state.selectedProject ? "项目资源库：" + state.selectedProject.name : "按项目组织团队资源";
+        createBtn.textContent = state.tab === "canvas" ? "存" : "+";
+        createBtn.title = state.tab === "canvas" ? "保存选中资源" : "新建";
+        createBtn.onclick = () => {
+          if (state.tab === "canvas") openSaveCanvasModal();
+          else if (state.tab === "project" && !state.selectedProject) openCreateProjectModal();
+          else if (state.tab === "project" && state.selectedProject) openCreateProjectFolderModal();
+          else openCreateMineFolderModal();
+        };
+        renderContent();
+        renderMembers();
+        renderLog();
+        renderActivity();
+        bindCanvasNodes();
+      }
+
+      function renderContent() {
+        if (state.tab === "canvas") return renderCanvasList();
+        if (state.tab === "mine") return renderFolderTree(state.my, "mine");
+        if (state.selectedProject) return renderProjectDetail();
+        return renderProjectList();
+      }
+
+      function renderCanvasList() {
+        const items = canvasAssets.filter(item => hit(item.name + item.desc + item.tags.join(" ")));
+        content.innerHTML = items.map(item => `
+          <div class="tree-row ${item.id === state.selectedCanvas ? "selected" : ""}" data-canvas-id="${item.id}">
+            <span></span><span>${item.type === "组" ? "▣" : "◆"}</span>
+            <div class="tree-name"><strong>${esc(item.name)}</strong><div class="muted">${esc(item.desc)}</div></div>
+            <button class="ghost" data-save-canvas="${item.id}" type="button">保存</button>
+          </div>
+        `).join("");
+        content.querySelectorAll("[data-canvas-id]").forEach(row => {
+          row.onclick = e => {
+            if (e.target.closest("button")) return;
+            state.selectedCanvas = row.dataset.canvasId;
+            document.querySelectorAll("[data-node]").forEach(n => n.classList.toggle("selected", n.dataset.node === state.selectedCanvas));
+            render();
+          };
+        });
+        content.querySelectorAll("[data-save-canvas]").forEach(btn => {
+          btn.onclick = () => openSaveCanvasModal(btn.dataset.saveCanvas);
+        });
+      }
+
+      function renderFolderTree(folders, scope, target = content) {
+        const rows = [];
+        folders.forEach(folder => {
+          rows.push(`
+            <div class="tree-row">
+              <span>▾</span><span>📁</span>
+              <div class="tree-name"><strong>${esc(folder.name)}</strong><div class="muted">${folder.children.length} 个资源</div></div>
+              ${scope === "mine" ? '<button class="ghost" data-add-mine="' + folder.id + '" type="button">加入</button>' : ""}
+            </div>
+          `);
+          folder.children.filter(item => hit(item.name + item.desc + item.type + item.tags.join(" "))).forEach(item => {
+            rows.push(`
+              <div class="tree-row" style="padding-left: 24px" data-preview="${item.id}">
+                <span></span><span>${item.type === "视频" ? "▶" : item.type === "文本" ? "文" : "◆"}</span>
+                <div class="tree-name">${esc(item.name)}<div class="muted">${esc(item.desc)}</div></div>
+                <button class="ghost" data-send="${item.id}" type="button">发画布</button>
+              </div>
+            `);
+          });
+        });
+        target.innerHTML = rows.join("") || '<div class="muted" style="padding: 24px">暂无资源</div>';
+        target.querySelectorAll("[data-preview]").forEach(row => row.onclick = e => {
+          if (e.target.closest("button")) return;
+          const item = findAssetInFolders(scope === "mine" ? state.my : state.selectedProject.folders, row.dataset.preview);
+          showPreview(item, e.currentTarget.getBoundingClientRect());
+        });
+        target.querySelectorAll("[data-send]").forEach(btn => btn.onclick = () => {
+          const item = findAssetInFolders(scope === "mine" ? state.my : state.selectedProject.folders, btn.dataset.send);
+          sendToCanvas(item);
+        });
+        target.querySelectorAll("[data-add-mine]").forEach(btn => btn.onclick = () => openSaveMineToProjectModal(btn.dataset.addMine));
+      }
+
+      function renderProjectList() {
+        const projects = state.projects.filter(p => hit(p.name + p.desc + roleLabel(p.role)));
+        content.innerHTML = projects.map(p => `
+          <article class="project-card">
+            <div class="project-cover">
+              <strong>${esc(p.name)}</strong>
+              <span>${esc(p.desc)}</span>
+            </div>
+            <div class="project-meta">
+              <div>${countAssets(p.folders)} 个资源 · ${p.members.length} 位成员</div>
+              <span class="pill ${roleClass(p.role)}">${roleLabel(p.role)}</span>
+            </div>
+            <div class="project-actions">
+              <button class="primary" data-open-project="${p.id}" type="button">进入项目</button>
+              <button class="ghost" data-save-selected="${p.id}" ${canEdit(p.role) ? "" : "disabled"} type="button">存入项目</button>
+            </div>
+          </article>
+        `).join("");
+        content.querySelectorAll("[data-open-project]").forEach(btn => btn.onclick = () => {
+          state.selectedProject = state.projects.find(p => p.id === btn.dataset.openProject);
+          render();
+        });
+        content.querySelectorAll("[data-save-selected]").forEach(btn => btn.onclick = () => {
+          const p = state.projects.find(x => x.id === btn.dataset.saveSelected);
+          openSaveCanvasModal(state.selectedCanvas, p.id);
+        });
+      }
+
+      function renderProjectDetail() {
+        const p = state.selectedProject;
+        content.innerHTML = `
+          <div class="project-header">
+            <button class="back" id="backProject" type="button">‹</button>
+            <div>
+              <div class="project-name">${esc(p.name)}</div>
+              <div class="project-sub">${countAssets(p.folders)} 个资源 · ${roleLabel(p.role)}</div>
+            </div>
+            <span class="pill ${roleClass(p.role)}">${roleLabel(p.role)}</span>
+          </div>
+          <div class="row-actions" style="padding: 10px 4px">
+            <button class="primary" id="saveToThisProject" ${canEdit(p.role) ? "" : "disabled"} type="button">保存选中资源</button>
+            <button class="ghost" id="membersBtn" type="button">成员</button>
+          </div>
+          <div id="projectTree"></div>
+        `;
+        document.querySelector("#backProject").onclick = () => { state.selectedProject = null; render(); };
+        document.querySelector("#saveToThisProject").onclick = () => openSaveCanvasModal(state.selectedCanvas, p.id);
+        document.querySelector("#membersBtn").onclick = () => openMembersModal();
+        renderFolderTree(p.folders, "project", document.querySelector("#projectTree"));
+      }
+
+      function bindCanvasNodes() {
+        document.querySelectorAll("#canvas .node, #canvas .group-node").forEach(node => {
+          if (node.dataset.bound) return;
+          node.dataset.bound = "1";
+          node.onpointerdown = e => {
+            if (e.button !== 0) return;
+            state.drag = {
+              node,
+              startX: e.clientX,
+              startY: e.clientY,
+              left: node.offsetLeft,
+              top: node.offsetTop,
+              moved: false
+            };
+            node.classList.add("dragging");
+            e.preventDefault();
+          };
+          node.onclick = () => {
+            state.selectedCanvas = node.dataset.node;
+            document.querySelectorAll("[data-node]").forEach(n => n.classList.toggle("selected", n.dataset.node === state.selectedCanvas));
+            document.querySelector("#canvasSelectionLabel").textContent = "已选中：" + getSelectedCanvasAsset().name;
+            pushActivity("已选中画布资源：" + getSelectedCanvasAsset().name);
+          };
+        });
+      }
+
+      document.addEventListener("pointermove", e => {
+        if (!state.drag) return;
+        const { node, startX, startY, left, top } = state.drag;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (Math.abs(dx) + Math.abs(dy) > 4) state.drag.moved = true;
+        const canvasRect = document.querySelector("#canvas").getBoundingClientRect();
+        const maxLeft = canvasRect.width - node.offsetWidth - 12;
+        const maxTop = canvasRect.height - node.offsetHeight - 12;
+        const nextLeft = Math.max(12, Math.min(maxLeft, left + dx));
+        const nextTop = Math.max(12, Math.min(maxTop, top + dy));
+        node.style.left = nextLeft + "px";
+        node.style.top = nextTop + "px";
+      });
+      document.addEventListener("pointerup", () => {
+        if (!state.drag) return;
+        state.drag.node.classList.remove("dragging");
+        if (state.drag.moved) {
+          pushActivity("已拖动画布资源：" + state.drag.node.querySelector("strong")?.textContent);
+        }
+        state.drag = null;
+      });
+
+      function renderMembers() {
+        const p = state.selectedProject || state.projects[0];
+        document.querySelector("#members").innerHTML = p.members.map(m => `
+          <div class="member">
+            <span>${esc(m.name)}</span>
+            <span class="pill ${roleClass(m.role)}">${roleLabel(m.role)}</span>
+          </div>
+        `).join("");
+      }
+      function renderLog() {
+        document.querySelector("#log").innerHTML = state.logs.map(item => `<div>${esc(item)}</div>`).join("");
+      }
+      function renderActivity() {
+        const activityText = document.querySelector("#activityLog");
+        if (activityText) activityText.textContent = state.activity[0] || "暂无操作";
+        const count = document.querySelector("#agentCount");
+        if (count) count.textContent = String(Math.max(1, state.activity.length));
+      }
+
+      function hit(text) {
+        if (!state.query) return true;
+        return String(text).toLowerCase().includes(state.query.toLowerCase());
+      }
+      function countAssets(folders) {
+        return folders.reduce((sum, f) => sum + f.children.length, 0);
+      }
+      function findAssetInFolders(folders, id) {
+        for (const f of folders) {
+          const found = f.children.find(item => item.id === id);
+          if (found) return found;
+        }
+        return null;
+      }
+      function getSelectedCanvasAsset(id = state.selectedCanvas) {
+        return canvasAssets.find(item => item.id === id) || canvasAssets[0];
+      }
+      function cloneFromCanvas(id) {
+        const source = getSelectedCanvasAsset(id);
+        return {
+          id: "a-new-" + state.counter++,
+          kind: "asset",
+          name: source.name,
+          type: source.type === "组" ? "组合" : source.type,
+          desc: "从画布保存的资源副本",
+          tags: [...source.tags]
+        };
+      }
+
+      function openSaveCanvasModal(assetId = state.selectedCanvas, projectId = "") {
+        const asset = getSelectedCanvasAsset(assetId);
+        const editableProjects = state.projects.filter(p => canEdit(p.role));
+        modal.innerHTML = `
+          <div class="modal-head">
+            <strong>保存到项目</strong>
+            <div class="muted" style="margin-top: 4px; font-size: 12px">当前选中：${esc(asset.name)}</div>
+          </div>
+          <div class="modal-body">
+            <div class="field">
+              <label>目标项目</label>
+              <select id="targetProject">${editableProjects.map(p => `<option value="${p.id}" ${p.id === projectId ? "selected" : ""}>${esc(p.name)} · ${roleLabel(p.role)}</option>`).join("")}</select>
+            </div>
+            <div class="field">
+              <label>目标文件夹</label>
+              <select id="targetFolder"></select>
+            </div>
+            <div class="field">
+              <label>资源名称</label>
+              <input id="assetName" value="${esc(asset.name)}" />
+            </div>
+            <div class="tip">保存后会在项目中生成独立资源记录，原画布内容不变。</div>
+          </div>
+          <div class="modal-foot">
+            <button class="text-btn" data-close type="button">取消</button>
+            <button class="primary" id="confirmSaveCanvas" type="button">确认保存</button>
+          </div>
+        `;
+        openModal();
+        const projectSelect = modal.querySelector("#targetProject");
+        const folderSelect = modal.querySelector("#targetFolder");
+        function refreshFolders() {
+          const p = state.projects.find(x => x.id === projectSelect.value);
+          folderSelect.innerHTML = p.folders.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join("");
+        }
+        projectSelect.onchange = refreshFolders;
+        refreshFolders();
+        modal.querySelector("#confirmSaveCanvas").onclick = () => {
+          const p = state.projects.find(x => x.id === projectSelect.value);
+          const f = p.folders.find(x => x.id === folderSelect.value);
+          const copy = cloneFromCanvas(assetId);
+          copy.name = modal.querySelector("#assetName").value.trim() || copy.name;
+          f.children.push(copy);
+          closeModal();
+          state.tab = "project";
+          state.selectedProject = p;
+          addLog(`已保存到项目：${p.name} / ${f.name}`);
+          render();
+        };
+      }
+
+      function openSaveMineToProjectModal(folderId) {
+        const sourceFolder = state.my.find(f => f.id === folderId);
+        if (!sourceFolder || !sourceFolder.children.length) return addLog("该文件夹暂无资源可保存。");
+        openSaveCanvasModal(state.selectedCanvas);
+      }
+
+      function openCreateProjectModal() {
+        modal.innerHTML = `
+          <div class="modal-head"><strong>新建项目</strong><div class="muted" style="margin-top: 4px; font-size: 12px">创建后系统会自动生成默认项目文件夹。</div></div>
+          <div class="modal-body">
+            <div class="field"><label>项目名称</label><input id="projectName" value="新项目资源库" /></div>
+            <div class="field"><label>项目描述</label><input id="projectDesc" value="用于团队沉淀和复用素材" /></div>
+            <div class="tip">默认生成：角色、怪物/Boss、宠物/坐骑、场景/地图、道具/武器、UI、成片素材集合、达人素材、品牌/渠道、其他。</div>
+          </div>
+          <div class="modal-foot"><button class="text-btn" data-close type="button">取消</button><button class="primary" id="confirmCreateProject" type="button">确认创建</button></div>
+        `;
+        openModal();
+        modal.querySelector("#confirmCreateProject").onclick = () => {
+          const name = modal.querySelector("#projectName").value.trim() || "新项目资源库";
+          const desc = modal.querySelector("#projectDesc").value.trim() || "用于团队沉淀和复用素材";
+          const p = project("p-new-" + state.counter++, name, desc, "manage", []);
+          state.projects.unshift(p);
+          state.tab = "project";
+          state.selectedProject = p;
+          closeModal();
+          addLog(`已创建项目：${name}，并初始化默认文件夹。`);
+          render();
+        };
+      }
+
+      function openCreateMineFolderModal() {
+        state.my.push(folder("新建个人文件夹"));
+        addLog("已在我的资源中新建一级文件夹。");
+        render();
+      }
+
+      function openCreateProjectFolderModal() {
+        const p = state.selectedProject;
+        if (!p) return;
+        if (!canManage(p.role)) return addLog("当前项目没有管理文件夹权限。");
+        p.folders.push(folder("新建项目文件夹"));
+        addLog(`已在项目「${p.name}」中新建一级文件夹。`);
+        render();
+      }
+
+      function openMembersModal() {
+        const p = state.selectedProject;
+        modal.innerHTML = `
+          <div class="modal-head"><strong>项目成员</strong><div class="muted" style="margin-top: 4px; font-size: 12px">${esc(p.name)} · ${roleLabel(p.role)}</div></div>
+          <div class="modal-body">
+            ${p.members.map(m => `<div class="member"><span>${esc(m.name)}</span><span class="pill ${roleClass(m.role)}">${roleLabel(m.role)}</span></div>`).join("")}
+            <div class="tip">${canManage(p.role) ? "P1：可在这里添加成员、移除成员、调整角色。" : "当前权限不可管理成员。"}</div>
+          </div>
+          <div class="modal-foot"><button class="primary" data-close type="button">知道了</button></div>
+        `;
+        openModal();
+      }
+
+      function showPreview(item, rect) {
+        if (!item) return;
+        preview.innerHTML = `
+          <div class="preview-media ${item.type === "视频" ? "video-thumb" : ""}"></div>
+          <div class="preview-title">${esc(item.name)}</div>
+          <div class="muted" style="margin-top: 4px; font-size: 12px">${esc(item.type)} · ${esc(item.desc)}</div>
+          <div style="margin-top: 8px">${(item.tags || []).map(t => `<span class="pill p0" style="margin-right: 4px">${esc(t)}</span>`).join("")}</div>
+          <div class="preview-actions">
+            <button class="primary" id="previewSend" type="button">发画布</button>
+            <button class="ghost" id="previewRef" type="button">引用</button>
+          </div>
+        `;
+        preview.style.left = Math.min(rect.right + 12, window.innerWidth - 320) + "px";
+        preview.style.top = Math.max(18, Math.min(rect.top, window.innerHeight - 260)) + "px";
+        preview.classList.remove("hidden");
+        preview.querySelector("#previewSend").onclick = () => sendToCanvas(item);
+        preview.querySelector("#previewRef").onclick = () => addLog("已引用到 Agent 上下文：" + item.name);
+      }
+      function hidePreview() {
+        preview.classList.add("hidden");
+      }
+      document.addEventListener("click", e => {
+        if (!preview.contains(e.target) && !e.target.closest("[data-preview]")) hidePreview();
+      });
+
+      function sendToCanvas(item) {
+        if (!item) return;
+        const el = document.createElement("div");
+        el.className = "node";
+        el.style.left = (12 + (state.counter * 9) % 64) + "%";
+        el.style.top = (18 + (state.counter * 13) % 58) + "%";
+        el.innerHTML = `<div class="thumb ${item.type === "视频" ? "video-thumb" : ""}"></div><strong>${esc(item.name)}</strong><span>从资源库发送</span>`;
+        document.querySelector("#canvas").appendChild(el);
+        addLog("已发送到当前画布：" + item.name);
+      }
+
+      function openModal() {
+        modalLayer.classList.remove("hidden");
+        modal.querySelectorAll("[data-close]").forEach(btn => btn.onclick = closeModal);
+      }
+      function closeModal() {
+        modalLayer.classList.add("hidden");
+      }
+
+      render();
+    </script>
+  </body>
+</html>
