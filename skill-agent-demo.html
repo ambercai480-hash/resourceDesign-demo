@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>画布 Agent Skill 接入 Demo</title>
+  <style>
+:root{
+  --brand:#165DFF;--brand-hover:#0B5EFF;--brand-soft:#E8F3FF;--brand-soft-2:#F2F7FF;
+  --ink:#1D2129;--ink-2:#4E5969;--ink-3:#86909C;--ink-4:#C9CDD4;
+  --line:#E5E6EB;--line-2:#F2F3F5;--fill:#F2F3F5;--bg:#F5F5F5;--card:#FFFFFF;
+  --nav-bg:#EFF1F8;--nav-line:#E1E4E9;
+  --success:#00B42A;--orange:#FF7D00;--danger:#F53F3F;--warn-bg:#FFF7E8;
+  --nav-h:58px;--left-w:285px;--chat-w:clamp(380px,30vw,470px);
+  --shadow-sm:0 1px 4px rgba(29,33,41,.06);
+  --shadow-md:0 4px 16px rgba(29,33,41,.08);
+  --shadow-lg:0 10px 30px rgba(29,33,41,.14);
+  --r-sm:6px;--r-md:8px;--r-lg:12px;--r-xl:16px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;font-size:13px;line-height:1.6;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+input,textarea{font-family:inherit}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#D6D8DE;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#C9CDD4}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== top nav ===== */
+.topnav{height:var(--nav-h);display:flex;align-items:center;gap:26px;padding:0 18px;background:var(--nav-bg);border-bottom:1px solid var(--nav-line);position:relative;z-index:30}
+.brand-logo{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;color:var(--ink);letter-spacing:.4px;white-space:nowrap}
+.brand-logo .mascot{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#FFD666,#FF7D00);display:grid;place-items:center;font-size:16px;line-height:1}
+.nav-menu{display:flex;align-items:center;gap:4px;height:100%}
+.nav-item{height:100%;display:flex;align-items:center;padding:0 12px;font-size:14px;color:var(--ink-2);cursor:pointer;position:relative;transition:color .15s}
+.nav-item:hover{color:var(--brand)}
+.nav-item.active{color:var(--brand);font-weight:600}
+.nav-item.active::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;background:var(--brand);border-radius:2px 2px 0 0}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.nav-icon{width:34px;height:34px;border-radius:var(--r-md);display:grid;place-items:center;color:var(--ink-2);cursor:pointer;font-size:15px}
+.nav-icon:hover{background:rgba(22,93,255,.08);color:var(--brand)}
+.user-chip{display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px;border-radius:var(--r-md)}
+.user-chip:hover{background:rgba(255,255,255,.7)}
+.user-chip .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#5B7CFA,#1D2129);color:#fff;display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+.user-chip .u-name{font-size:13px;color:var(--ink);line-height:1.25}
+.user-chip .u-sub{font-size:11px;color:var(--ink-3);line-height:1.25}
+/* ===== shell layout ===== */
+.app{display:flex;height:calc(100vh - var(--nav-h));overflow:hidden}
+
+/* ===== left asset panel ===== */
+.left{width:var(--left-w);flex:0 0 var(--left-w);background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.left-head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px}
+.left-title{font-size:16px;font-weight:600;color:var(--ink)}
+.left-collapse{width:26px;height:26px;border:0;background:transparent;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--ink-3);cursor:pointer;font-size:13px}
+.left-collapse:hover{background:var(--fill);color:var(--ink-2)}
+.left-tabs{display:flex;gap:20px;padding:0 14px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.left-tab{padding:8px 0 10px;font-size:13px;color:var(--ink-2);cursor:pointer;border:0;background:transparent;border-bottom:2px solid transparent;display:flex;align-items:center;gap:5px;margin-bottom:-1px;transition:color .15s}
+.left-tab:hover{color:var(--brand)}
+.left-tab.active{color:var(--brand);font-weight:600;border-bottom-color:var(--brand)}
+.left-search{display:flex;gap:8px;align-items:center;padding:10px 14px 8px;flex:0 0 auto}
+.left-search input{flex:1;height:32px;border:1px solid transparent;background:var(--fill);border-radius:var(--r-sm);padding:0 10px;font-size:12px;color:var(--ink);outline:none;transition:.15s}
+.left-search input::placeholder{color:var(--ink-3)}
+.left-search input:focus{background:#fff;border-color:var(--brand)}
+.left-search .filter{width:32px;height:32px;border:0;border-radius:var(--r-sm);background:var(--fill);display:grid;place-items:center;color:var(--ink-2);cursor:pointer}
+.left-search .filter:hover{color:var(--brand)}
+.asset-list{flex:1;overflow-y:auto;padding:2px 8px 18px;min-height:0}
+.tree-row{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px;border-radius:var(--r-sm);color:var(--ink-2);font-size:13px;cursor:pointer;transition:background .12s}
+.tree-row:hover{background:var(--fill)}
+.tree-row.active{background:var(--brand-soft);color:var(--brand);font-weight:500}
+.tree-row .caret{color:var(--ink-3);font-size:9px;width:10px;flex:0 0 auto;text-align:center}
+.tree-row .folder{font-size:13px;flex:0 0 auto}
+.tree-row .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-row.video{height:54px;gap:10px}
+.tree-row.video .thumb{width:58px;height:36px;border-radius:4px;background:linear-gradient(135deg,#DCE0E8,#B7BDC9);flex:0 0 auto;position:relative}
+.tree-row.video .thumb::after{content:"\25B6";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:10px;opacity:.85}
+.asset-empty{color:var(--ink-3);font-size:12px;padding:18px;text-align:center}
+/* ===== canvas ===== */
+.canvas{flex:1;position:relative;background:var(--bg);background-image:radial-gradient(#DDDFE5 1px,transparent 1px);background-size:22px 22px;overflow:hidden;min-width:0}
+.canvas-top{position:absolute;top:14px;left:16px;right:16px;display:flex;align-items:center;gap:12px;z-index:6;pointer-events:none}
+.canvas-top > *{pointer-events:auto}
+.crumb{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:6px 10px;font-size:13px;color:var(--ink);box-shadow:var(--shadow-sm)}
+.crumb .back{border:0;background:transparent;color:var(--ink-3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
+.crumb .back:hover{color:var(--brand)}
+.crumb .tag-editable{display:flex;align-items:center;gap:4px;color:var(--brand);background:var(--brand-soft);border-radius:4px;padding:2px 7px;font-size:11px}
+.canvas-top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.presence{display:flex;align-items:center}
+.presence .p-av{width:28px;height:28px;border-radius:50%;border:2px solid #fff;margin-left:-9px;background:linear-gradient(135deg,#FFB65A,#FF7D00);box-shadow:var(--shadow-sm)}
+.presence .p-av:nth-child(2){background:linear-gradient(135deg,#7EC8FF,#165DFF)}
+.presence .p-av:first-child{margin-left:0}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);font-size:13px;color:var(--ink-2);cursor:pointer;box-shadow:var(--shadow-sm);transition:.15s}
+.ghost-btn:hover{border-color:var(--brand);color:var(--brand)}
+.zoom{display:flex;align-items:center;height:32px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-sm)}
+.zoom button{width:30px;height:30px;border:0;background:transparent;color:var(--ink-2);cursor:pointer;font-size:14px;line-height:1}
+.zoom button:hover{background:var(--fill);color:var(--ink)}
+.zoom .z-val{min-width:48px;text-align:center;font-size:12px;color:var(--ink-2);border-left:1px solid var(--line);border-right:1px solid var(--line);line-height:30px}
+.canvas-toolbar{position:absolute;left:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:5px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:var(--shadow-md);z-index:5}
+.canvas-toolbar .icon-btn.active{background:var(--brand-soft);color:var(--brand)}
+.ghost-node{position:absolute;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-sm);overflow:hidden}
+.ghost-node .gn-bar{height:8px;background:var(--fill)}
+.ghost-node .gn-body{padding:8px;display:grid;place-items:center;color:var(--ink-4)}
+.ghost-node .gn-body .ph{width:100%;height:100%;border-radius:4px;background:linear-gradient(135deg,#EDEFF3,#DCE0E8);display:grid;place-items:center;color:#AEB4BF;font-size:22px}
+.ghost-node.selected{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand),var(--shadow-md)}
+.floating-note{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-md);z-index:4}
+.canvas-thumbs{position:absolute;left:72px;bottom:14px;display:flex;gap:10px;align-items:flex-end;z-index:3}
+.canvas-thumbs .ct{width:74px;height:96px;border-radius:var(--r-sm);background:linear-gradient(160deg,#FFE7C2,#FF9A3D);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+.canvas-thumbs .ct.t2{background:linear-gradient(160deg,#CDE4FF,#4E8CFF)}
+.canvas-thumbs .ct.t3{background:linear-gradient(160deg,#E2E5EA,#F7F8FA)}
+.canvas-thumbs .ct.t4{background:linear-gradient(160deg,#FFD9D9,#FF7D7D)}
+.canvas-thumbs .ct.t5{background:linear-gradient(160deg,#D6F5DE,#3FBF5F)}
+/* ===== chat panel ===== */
+.chat{width:var(--chat-w);flex:0 0 var(--chat-w);background:var(--card);border-left:1px solid var(--line);display:flex;flex-direction:column;position:relative;min-height:0}
+.chat-head{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.chat-title{font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;min-width:0}
+.chat-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-title .info{color:var(--ink-3);font-size:12px;cursor:help;flex:0 0 auto}
+.chat-head .hint{display:none}
+.new-session{margin-left:auto;height:28px;padding:0 12px;border:1px solid var(--brand);color:var(--brand);background:#fff;border-radius:var(--r-sm);font-size:12px;cursor:pointer;white-space:nowrap;transition:.15s;flex:0 0 auto}
+.new-session:hover{background:var(--brand-soft)}
+.chat-expand{width:28px;height:28px;border:0;background:transparent;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--ink-3);cursor:pointer;font-size:14px;flex:0 0 auto}
+.chat-expand:hover{background:var(--fill);color:var(--ink-2)}
+.messages{flex:1;overflow-y:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:16px;min-height:0}
+.msg{position:relative;padding-left:38px;font-size:13px;line-height:1.75;color:var(--ink-2);word-break:break-word}
+.msg::before{content:"\1F435";position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--warn-bg);border:1px solid #FFE1B0;display:grid;place-items:center;font-size:14px;line-height:1}
+.msg > strong{display:block;font-size:12px;font-weight:500;color:var(--ink-3);margin-bottom:3px;line-height:1.4}
+.msg .result-list{margin:8px 0;padding-left:18px}
+.msg .result-list li{margin:3px 0}
+.result-script,.execution-script{margin:10px 0 0;padding:10px 12px;background:var(--fill);border:1px solid var(--line);border-radius:var(--r-sm);font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:12px;line-height:1.7;color:var(--ink);white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+.result-tail,.execution-tail{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:11px;color:var(--ink-3)}
+/* ===== composer ===== */
+.composer-wrap{flex:0 0 auto;padding:10px 14px 14px;border-top:1px solid var(--line);position:relative;background:#fff;z-index:20}
+.composer{border:1px solid var(--line);border-radius:var(--r-lg);background:#fff;padding:10px 12px 8px;transition:border-color .15s,box-shadow .15s}
+.composer:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(22,93,255,.08)}
+.selected-tag{display:none;align-items:center;gap:6px;background:var(--brand-soft);color:var(--brand);border-radius:var(--r-sm);padding:3px 8px;font-size:12px;width:fit-content;margin-bottom:8px}
+.selected-tag.show{display:inline-flex}
+.selected-tag button{border:0;background:transparent;color:var(--brand);cursor:pointer;font-size:13px;line-height:1;padding:0 2px}
+.composer textarea{width:100%;border:0;outline:none;resize:none;font-size:13px;line-height:1.7;color:var(--ink);min-height:62px;height:62px;background:transparent;display:block}
+.composer textarea::placeholder{color:var(--ink-3)}
+.composer-actions{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px}
+.composer-actions .actions{display:flex;align-items:center;gap:6px}
+.counter{font-size:11px;color:var(--ink-3);margin-left:auto;padding-right:6px}
+.icon-btn{width:32px;height:32px;border:0;background:transparent;border-radius:var(--r-md);color:var(--ink-2);font-size:15px;cursor:pointer;display:grid;place-items:center;line-height:1;transition:background .12s,color .12s;padding:0}
+.icon-btn:hover{background:var(--fill);color:var(--ink)}
+.pill{height:32px;padding:0 12px;border-radius:var(--r-md);border:1px solid var(--line);background:#fff;color:var(--ink-2);font-size:13px;cursor:pointer;transition:.15s;white-space:nowrap}
+.pill:hover{border-color:var(--brand);color:var(--brand)}
+.pill.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.send{width:34px;height:34px;border-radius:50%;border:0;background:var(--brand);color:#fff;font-size:13px;cursor:pointer;display:grid;place-items:center;transition:.15s}
+.send:hover{background:var(--brand-hover)}
+
+/* ===== picker ===== */
+.picker{position:fixed;width:360px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:12px;display:none;z-index:70}
+.picker.open{display:block}
+.picker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.picker-title{font-size:14px;font-weight:600;color:var(--ink)}
+.create-wrap{position:relative}
+.create-btn{height:28px;padding:0 10px;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;color:var(--ink-2);font-size:12px;cursor:pointer}
+.create-btn:hover{border-color:var(--brand);color:var(--brand)}
+.create-menu{position:absolute;right:0;top:34px;min-width:262px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-md);display:none;overflow:hidden;z-index:5}
+.create-menu.open{display:block}
+.create-item{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;font-size:13px;color:var(--ink);cursor:pointer}
+.create-item span{font-size:11px;color:var(--ink-3)}
+.create-item:hover{background:var(--brand-soft)}
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.tab-btn{padding:6px 0 8px;border:0;background:transparent;font-size:13px;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab-btn:hover{color:var(--brand)}
+.tab-btn.active{color:var(--brand);font-weight:600;border-bottom-color:var(--brand)}
+.picker-body{display:flex;flex-direction:column;min-height:0}
+.search{width:100%;height:32px;border:1px solid var(--line);border-radius:var(--r-sm);padding:0 10px;font-size:12px;outline:none;margin-bottom:8px;color:var(--ink);flex:0 0 auto}
+.search:focus{border-color:var(--brand)}
+.search::placeholder{color:var(--ink-3)}
+.skill-list{display:flex;flex-direction:column;gap:2px;max-height:288px;overflow-y:auto}
+.skill-row{display:flex;align-items:center;gap:8px;padding:8px;border-radius:var(--r-sm);cursor:pointer;position:relative}
+.skill-row:hover{background:var(--fill)}
+.skill-row.active{background:var(--brand-soft)}
+.skill-row .bolt{color:var(--orange);font-size:12px;flex:0 0 auto}
+.skill-main{flex:1;border:0;background:transparent;text-align:left;cursor:pointer;padding:0;min-width:0}
+.skill-title-line{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);font-weight:500}
+.skill-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.skill-desc{font-size:11px;color:var(--ink-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info-dot{width:16px;height:16px;border-radius:50%;border:1px solid var(--ink-4);background:transparent;color:var(--ink-3);font-size:10px;line-height:1;cursor:pointer;display:grid;place-items:center;flex:0 0 auto;font-style:italic;padding:0}
+.info-dot:hover,.info-dot.active{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+.row-action{width:26px;height:26px;border:0;background:transparent;border-radius:var(--r-sm);cursor:pointer;color:var(--ink-3);font-size:14px;flex:0 0 auto;display:grid;place-items:center;padding:0}
+.row-action:hover{background:var(--fill);color:var(--orange)}
+.row-action.active{color:var(--orange)}
+.detail-popover{display:none;position:absolute;left:8px;right:8px;top:100%;margin-top:4px;background:#1D2129;color:#fff;border-radius:var(--r-sm);padding:8px 10px;font-size:11px;line-height:1.75;z-index:8;box-shadow:var(--shadow-md)}
+.detail-popover.open,.skill-row:hover .detail-popover{display:block}
+.detail-popover strong{color:#fff;font-weight:600}
+/* ===== draft panel ===== */
+.draft-panel{position:absolute;left:14px;right:14px;bottom:100%;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);display:none;z-index:65;overflow:hidden}
+.draft-panel.open{display:block}
+.draft-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink)}
+.draft-body{padding:12px;display:flex;flex-direction:column;gap:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:var(--ink-3)}
+.field input,.field textarea{border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;font-size:12px;color:var(--ink);outline:none;background:#fff;resize:vertical;width:100%}
+.field input:focus,.field textarea:focus{border-color:var(--brand);box-shadow:0 0 0 2px rgba(22,93,255,.08)}
+.field textarea{min-height:56px;line-height:1.6}
+.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.draft-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:2px}
+.btn-small{height:30px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;color:var(--ink-2);font-size:12px;cursor:pointer}
+.btn-small:hover{border-color:var(--brand);color:var(--brand)}
+.btn-small.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-small.primary:hover{background:var(--brand-hover);color:#fff}
+.btn-ghost{width:24px;height:24px;border:0;background:transparent;border-radius:var(--r-sm);color:var(--ink-3);cursor:pointer;font-size:14px;display:grid;place-items:center;padding:0}
+.btn-ghost:hover{background:var(--fill);color:var(--ink)}
+
+/* ===== run dock ===== */
+.run-dock{position:relative;display:none;background:var(--brand-soft-2);border:1px solid #D6E4FF;border-radius:var(--r-md);margin-bottom:8px;overflow:hidden}
+.run-dock.show{display:block}
+.run-dock.open .run-body{display:block}
+.run-body{display:none}
+.run-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;font-size:12px;color:var(--brand)}
+.run-head:hover{background:rgba(22,93,255,.05)}
+.run-title{display:flex;align-items:center;gap:6px;font-weight:600}
+.run-meta{color:var(--ink-3);font-size:11px}
+.run-steps{padding:2px 12px 10px;display:flex;flex-direction:column;gap:5px}
+.run-step{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ink-3)}
+.run-dot{width:16px;height:16px;border-radius:50%;border:1px solid var(--ink-4);flex:0 0 auto;display:grid;place-items:center;font-size:9px;line-height:1;background:#fff;margin-top:1px;color:#fff}
+.run-step.done .run-dot{background:var(--success);border-color:var(--success)}
+.run-step.current .run-dot{border-color:var(--brand);box-shadow:0 0 0 3px rgba(22,93,255,.14)}
+.run-step-title{font-size:12px;color:var(--ink-2)}
+.run-step-desc{font-size:11px;color:var(--ink-3)}
+.run-step.done .run-step-title{color:var(--ink-2)}
+.run-step.current .run-step-title{color:var(--brand);font-weight:600}
+
+/* ===== save strip ===== */
+.save-strip{display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--warn-bg);border:1px solid #FFE1B0;border-radius:var(--r-md);padding:8px 10px;margin-bottom:8px;font-size:12px;color:#8B5A00}
+.save-strip.show{display:flex}
+.save-text{line-height:1.5}
+.save-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+/* ===== task card / execution result ===== */
+.task-card{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.task-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--line);font-size:12px;font-weight:600;color:var(--ink);background:var(--brand-soft-2)}
+.task-count{color:var(--brand);font-weight:600;font-size:11px}
+.execution-intro{padding:9px 12px 0;font-size:12px;color:var(--ink-3)}
+.task-step{display:flex;gap:9px;align-items:flex-start;padding:8px 12px 0}
+.task-dot{width:18px;height:18px;border-radius:50%;border:1px solid var(--ink-4);flex:0 0 auto;display:grid;place-items:center;font-size:10px;line-height:1;background:#fff;color:#fff}
+.task-step.done .task-dot{background:var(--success);border-color:var(--success)}
+.task-step.current .task-dot{border-color:var(--brand);box-shadow:0 0 0 3px rgba(22,93,255,.14)}
+.task-step-title{font-size:12px;color:var(--ink);font-weight:500}
+.task-step.current .task-step-title{color:var(--brand)}
+.task-step.done .task-step-title{color:var(--ink-2)}
+.task-step-desc{font-size:11px;color:var(--ink-3);margin-top:1px}
+.task-step:last-child{padding-bottom:2px}
+.execution-result{margin:12px;padding:12px;border-radius:var(--r-md);background:var(--brand-soft-2);border:1px solid #D6E4FF}
+.execution-result.pending{background:var(--fill);border-color:var(--line);color:var(--ink-3);font-size:12px}
+.execution-result-head{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--brand);font-weight:600;margin-bottom:6px}
+.execution-result-head span:last-child{color:var(--ink-3);font-weight:400}
+.execution-result-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.execution-summary{font-size:12px;color:var(--ink-2)}
+.execution-result .result-list{margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--ink-2)}
+.execution-result .execution-script,.execution-result .result-script{background:#fff}
+
+/* ===== responsive ===== */
+@media (max-width:1360px){:root{--left-w:250px}}
+@media (max-width:1180px){:root{--left-w:220px;--chat-w:clamp(340px,34vw,440px)}}
+@media (max-width:1040px){.left{display:none}}
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand-logo"><span class="mascot">🐵</span><span>贪玩游戏</span></div>
+    <div class="nav-menu">
+      <div class="nav-item">首页</div>
+      <div class="nav-item active">AI工具库</div>
+      <div class="nav-item">热门网站</div>
+      <div class="nav-item">系统管理</div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-icon" title="生成列表">☰</div>
+      <div class="user-chip">
+        <div class="avatar">蔡</div>
+        <div>
+          <div class="u-name">蔡佳怡</div>
+          <div class="u-sub">游戏-技术线-数据产品部</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div class="app">
+    <aside class="left">
+      <div class="left-head">
+        <div class="left-title">资产库</div>
+        <button class="left-collapse" aria-label="收起资产库">«</button>
+      </div>
+      <div class="left-tabs">
+        <button class="left-tab active" data-pane="canvas"><span>✦</span>画布</button>
+        <button class="left-tab" data-pane="mine"><span>☺</span>我的</button>
+        <button class="left-tab" data-pane="team"><span>☻</span>团队</button>
+      </div>
+      <div class="left-search">
+        <input id="leftSearch" placeholder="搜索当前画布节点" aria-label="搜索当前画布节点">
+        <button class="filter" aria-label="筛选">⚙</button>
+      </div>
+      <div class="asset-list" id="assetList">
+        <div class="tree-row" data-pane="canvas" data-name="AI段子"><span class="caret">▶</span><span class="folder">📁</span><span class="name">AI段子</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="牛来系列"><span class="caret">▶</span><span class="folder">📁</span><span class="name">牛来系列</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="人物资产图"><span class="caret">▶</span><span class="folder">📁</span><span class="name">人物资产图</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="标题"><span class="caret">▶</span><span class="folder">📁</span><span class="name">标题</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="劝玩天龙"><span class="caret">▶</span><span class="folder">📁</span><span class="name">劝玩天龙</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="土味情话合集"><span class="caret">▶</span><span class="folder">📁</span><span class="name">土味情话合集</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="天龙找东西"><span class="caret">▶</span><span class="folder">📁</span><span class="name">天龙找东西</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="奇迹UI"><span class="caret">▶</span><span class="folder">📁</span><span class="name">奇迹UI</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="天龙UI"><span class="caret">▶</span><span class="folder">📁</span><span class="name">天龙UI</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="大翅膀"><span class="caret">▶</span><span class="folder">📁</span><span class="name">大翅膀</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="新建组"><span class="caret">▶</span><span class="folder">📁</span><span class="name">新建组</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="新建组"><span class="caret">▶</span><span class="folder">📁</span><span class="name">新建组</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="大宇报"><span class="caret">▶</span><span class="folder">📁</span><span class="name">大宇报</span></div>
+        <div class="tree-row" data-pane="canvas" data-name="新建组-视频"><span class="caret">▼</span><span class="folder">📂</span><span class="name">新建组</span></div>
+        <div class="tree-row video" data-pane="canvas" data-name="视频 01"><span class="thumb"></span><span class="name">视频素材 01</span></div>
+        <div class="tree-row video" data-pane="canvas" data-name="视频 02"><span class="thumb"></span><span class="name">视频素材 02</span></div>
+        <div class="tree-row video" data-pane="canvas" data-name="视频 03"><span class="thumb"></span><span class="name">视频素材 03</span></div>
+        <div class="tree-row video" data-pane="canvas" data-name="视频 04"><span class="thumb"></span><span class="name">视频素材 04</span></div>
+        <div class="tree-row" data-pane="mine" data-name="角色设定生成"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">角色设定生成</span></div>
+        <div class="tree-row" data-pane="mine" data-name="对话转化流程"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">对话转化流程</span></div>
+        <div class="tree-row" data-pane="mine" data-name="我的分镜模板"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">我的分镜模板</span></div>
+        <div class="tree-row" data-pane="mine" data-name="我的口播稿"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">我的口播稿</span></div>
+        <div class="tree-row" data-pane="team" data-name="团队-世界观设定"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">世界观设定</span></div>
+        <div class="tree-row" data-pane="team" data-name="团队-投放素材规范"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">投放素材规范</span></div>
+        <div class="tree-row" data-pane="team" data-name="团队-爆款拆解"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">爆款拆解</span></div>
+        <div class="tree-row" data-pane="team" data-name="团队-合规校验"><span class="caret">▶</span><span class="folder">⚡</span><span class="name">合规校验</span></div>
+        <div class="asset-empty" id="assetEmpty" style="display:none;">没有匹配的节点</div>
+      </div>
+    </aside>    <main class="canvas" aria-label="画布区域">
+      <div class="canvas-top">
+        <div class="crumb">
+          <button class="back" aria-label="返回">‹</button>
+          <span>AI素材</span>
+          <span class="tag-editable">可编辑 ⌄</span>
+        </div>
+        <div class="canvas-top-right">
+          <div class="presence"><span class="p-av" title="蔡佳怡"></span><span class="p-av" title="协作者"></span></div>
+          <button class="ghost-btn" id="dupNode">⧉ 创建副本</button>
+          <div class="zoom">
+            <button class="z-out" aria-label="缩小">−</button>
+            <span class="z-val" id="zoomValue">11%</span>
+            <button class="z-in" aria-label="放大">＋</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-toolbar">
+        <button class="icon-btn active" aria-label="选择">➤</button>
+        <button class="icon-btn" aria-label="历史">◷</button>
+        <button class="icon-btn" aria-label="评论">◌</button>
+      </div>
+      <div class="ghost-node" style="left:96px;top:104px;width:176px;height:126px;">
+        <div class="gn-bar"></div>
+        <div class="gn-body" style="height:118px;padding:8px;"><div class="ph" style="height:100%;">🖼</div></div>
+      </div>
+      <div class="ghost-node" style="left:300px;top:150px;width:210px;height:150px;">
+        <div class="gn-bar"></div>
+        <div class="gn-body" style="height:142px;padding:8px;"><div class="ph" style="height:100%;">🖼</div></div>
+      </div>
+      <div class="ghost-node selected" style="left:560px;top:196px;width:250px;height:172px;">
+        <div class="gn-bar"></div>
+        <div class="gn-body" style="height:164px;padding:8px;"><div class="ph" style="height:100%;">🖼</div></div>
+      </div>
+      <div class="ghost-node" style="left:214px;top:352px;width:150px;height:106px;">
+        <div class="gn-bar"></div>
+        <div class="gn-body" style="height:98px;padding:8px;"><div class="ph" style="height:100%;">🖼</div></div>
+      </div>
+      <div class="floating-note">当前视窗没有节点 <button class="btn-small" id="backNode">返回节点</button></div>
+      <div class="canvas-thumbs">
+        <div class="ct t1"></div>
+        <div class="ct t2"></div>
+        <div class="ct t3"></div>
+        <div class="ct t4"></div>
+        <div class="ct t5"></div>
+      </div>
+    </main>    <section class="chat">
+      <header class="chat-head">
+        <div class="chat-title"><span id="chatTitle">画布 Agent · Skill 调用</span><span class="info" title="Demo 聚焦两个闭环：调用平台已确认 Skill；把有效对话总结成我的 Skill">ⓘ</span></div>
+        <button class="new-session" id="newSession">新会话</button>
+        <button class="chat-expand" aria-label="展开">⤢</button>
+      </header>
+      <div class="messages" id="messages">
+        <div class="msg"><strong>Agent</strong>我已经准备好。你可以先从通用 Skill 中选择一个能力调用；当一次对话跑顺后，也可以把这套过程总结成我的 Skill。</div>
+      </div>
+      <div class="composer-wrap">
+        <div class="picker" id="picker">
+          <div class="picker-head">
+            <div class="picker-title">Skill</div>
+            <div class="create-wrap">
+              <button class="create-btn" id="createBtn">＋ 创建</button>
+              <div class="create-menu" id="createMenu">
+                <button class="create-item" id="convertFromMenu">将本次对话转化为 Skill<span>从当前上下文自动总结名称、输入和输出</span></button>
+              </div>
+            </div>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Skill 分组">
+            <button class="tab-btn active" data-tab="common">通用</button>
+            <button class="tab-btn" data-tab="favorite">收藏</button>
+            <button class="tab-btn" data-tab="mine">我的</button>
+          </div>
+          <div class="picker-body">
+            <input class="search" id="search" placeholder="搜索 Skill" aria-label="搜索 Skill">
+            <div class="skill-list" id="skillList"></div>
+          </div>
+        </div>
+        <div class="draft-panel" id="draftPanel">
+          <div class="draft-head"><span>保存为我的 Skill</span><button class="icon-btn" id="closeDraft" aria-label="关闭">×</button></div>
+          <div class="draft-body">
+            <div class="field"><label for="draftName">系统总结的 Skill 名称</label><input id="draftName" value="角色设定生成"></div>
+            <div class="field"><label for="draftDesc">说明</label><input id="draftDesc" value="根据角色方向生成可复用的角色设定稿"></div>
+            <div class="draft-grid">
+              <div class="field"><label for="draftInput">输入要点</label><textarea id="draftInput">角色类型、世界观、风格关键词、用途</textarea></div>
+              <div class="field"><label for="draftOutput">输出要点</label><textarea id="draftOutput">角色定位、外观关键词、性格设定、可继续扩写的提示词</textarea></div>
+            </div>
+            <div class="draft-actions"><button class="btn-small" id="cancelDraft">取消</button><button class="btn-small primary" id="saveSkill">保存到我的 Skill</button></div>
+          </div>
+        </div>
+        <div class="run-dock" id="runDock" aria-live="polite"></div>
+        <div class="save-strip" id="saveStrip">
+          <span class="save-text">这次对话可以沉淀为你的个人 Skill</span>
+          <span class="save-actions">
+            <button class="btn-small primary" id="openDraft">总结为我的 Skill</button>
+            <button class="btn-ghost" id="dismissSave" aria-label="关闭沉淀提示">×</button>
+          </span>
+        </div>
+        <div class="composer">
+          <div class="selected-tag" id="selectedTag"><span>⚡</span><span id="selectedName"></span><button id="removeSkill" aria-label="移除 Skill">×</button></div>
+          <textarea id="prompt" placeholder="开始你的创作，或者 @ 引用工作流 / 节点 / 资源">帮我生成一个适合东方奇幻短片的游戏角色设定</textarea>
+          <div class="composer-actions">
+            <div class="actions"><button class="icon-btn" aria-label="附件">⌕</button><button class="icon-btn" aria-label="资源">▧</button></div>
+            <span class="counter" id="charCount">0 / 2000</span>
+            <div class="actions"><button class="pill" id="skillBtn">⚙ Skill</button><button class="send" id="send">➤</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+const confirmedSkills = [
+      { name: '脚本生成器', id: 'script-generator', desc: '把一句话需求变成可执行脚本', scene: '适合从一句话创意、角色方向或视频需求开始生成脚本。', input: '主题、角色、风格、时长、目标平台', output: '脚本结构、对白/旁白、画面段落、下一步建议' },
+      { name: '分镜设计器', id: 'storyboard-designer', desc: '把脚本拆成分镜方案', scene: '适合把已有脚本拆成可执行镜头。', input: '脚本、镜头数量、画面风格、重点角色', output: '镜头序列、景别、动作、画面重点' },
+      { name: 'Seedance 提示词引擎', id: 'seedance-prompt-engine', desc: '把分镜转成可投喂的视频提示词', scene: '适合把分镜整理成视频模型可用的提示词。', input: '分镜内容、主体动作、镜头运动、风格要求', output: '视频提示词、参数建议、风险提示' },
+      { name: '图片提示词引擎', id: 'image-prompt-engine', desc: '把想法转成出图提示词', scene: '适合生成角色图、场景图、道具图等图片资产。', input: '主体、环境、风格、构图、用途', output: '图片提示词、负向提示、风格关键词' },
+      { name: '文案生成器', id: 'copy-caption-generator', desc: '生成标题、口播和短文案', scene: '适合补齐传播文案、短视频标题和口播。', input: '内容主题、受众、平台、语气', output: '标题、口播、短文案、多版本备选' },
+      { name: '提示词体检器', id: 'prompt-lint', desc: '检查提示词里的问题', scene: '适合检查提示词是否冲突、缺信息或表达不清。', input: '待检查提示词、目标模型、输出目标', output: '问题清单、缺失信息、修改建议' },
+      { name: '提示词修复器', id: 'prompt-fix', desc: '自动修正提示词', scene: '适合把存在问题的提示词修成可直接执行版本。', input: '原提示词、体检结果、保留要求', output: '修复后提示词、修改说明、可执行版本' },
+      { name: '视频拆脚本', id: 'video-analysis-to-script', desc: '把视频拆解成脚本', scene: '适合把参考视频、成片或竞品内容拆成可复用脚本。', input: '视频内容、拆解目标、重点维度', output: '脚本结构、镜头顺序、节奏拆解' }
+    ];
+    let mySkills = [];
+    const favoriteIds = new Set();
+    let selected = null;
+    let activeTab = 'common';
+    let detailSkill = null;
+    const picker = document.getElementById('picker');
+    const skillList = document.getElementById('skillList');
+    const search = document.getElementById('search');
+    const skillBtn = document.getElementById('skillBtn');
+    const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
+    const createBtn = document.getElementById('createBtn');
+    const createMenu = document.getElementById('createMenu');
+    const convertFromMenu = document.getElementById('convertFromMenu');
+    const selectedTag = document.getElementById('selectedTag');
+    const selectedName = document.getElementById('selectedName');
+    const removeSkill = document.getElementById('removeSkill');
+    const promptInput = document.getElementById('prompt');
+    const send = document.getElementById('send');
+    const messages = document.getElementById('messages');
+    const runDock = document.getElementById('runDock');
+    const saveStrip = document.getElementById('saveStrip');
+    const draftPanel = document.getElementById('draftPanel');
+    const openDraft = document.getElementById('openDraft');
+    const closeDraft = document.getElementById('closeDraft');
+    const cancelDraft = document.getElementById('cancelDraft');
+    const saveSkill = document.getElementById('saveSkill');
+    const draftName = document.getElementById('draftName');
+    const draftDesc = document.getElementById('draftDesc');
+    const draftInput = document.getElementById('draftInput');
+    const draftOutput = document.getElementById('draftOutput');
+    const dismissSave = document.getElementById('dismissSave');
+    let conversationTurns = 0;
+    let saveToastDismissed = false;
+
+    function allSkills() {
+      return [...confirmedSkills, ...mySkills];
+    }
+    function currentItems() {
+      if (activeTab === 'favorite') return allSkills().filter(item => favoriteIds.has(item.id));
+      if (activeTab === 'mine') return mySkills;
+      return confirmedSkills;
+    }
+    function filtered(items, q) {
+      return items.filter(item => !q || (item.name + item.id + item.desc).toLowerCase().includes(q));
+    }
+    function closeDetailPopover() {
+      if (!detailSkill) return;
+      detailSkill = null;
+      renderRows();
+    }
+
+    function setActiveTab(tab) {
+      activeTab = tab;
+      tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+      detailSkill = null;
+      renderRows();
+    }
+    function renderRows() {
+      const q = search.value.trim().toLowerCase();
+      skillList.innerHTML = '';
+      const visible = filtered(currentItems(), q);
+      if (visible.length) {
+        visible.forEach(skill => {
+          const row = document.createElement('div');
+          row.className = 'skill-row' + (selected && selected.id === skill.id ? ' active' : '');
+
+          const bolt = document.createElement('span');
+          bolt.className = 'bolt';
+          bolt.textContent = '⚡';
+
+          const main = document.createElement('button');
+          main.className = 'skill-main';
+          main.innerHTML = '<div class="skill-title-line"><span class="skill-name">' + skill.name + '</span></div><div class="skill-desc">' + skill.desc + '</div>';
+          main.addEventListener('click', () => chooseSkill(skill));
+
+          const info = document.createElement('button');
+          info.className = 'info-dot' + (detailSkill && detailSkill.id === skill.id ? ' active' : '');
+          info.title = '查看详情';
+          info.textContent = 'i';
+          info.addEventListener('click', (event) => {
+            event.stopPropagation();
+            detailSkill = detailSkill && detailSkill.id === skill.id ? null : skill;
+            renderRows();
+          });
+          main.querySelector('.skill-title-line').appendChild(info);
+
+          const fav = document.createElement('button');
+          fav.className = 'row-action favorite' + (favoriteIds.has(skill.id) ? ' active' : '');
+          fav.title = favoriteIds.has(skill.id) ? '取消收藏' : '收藏';
+          fav.textContent = favoriteIds.has(skill.id) ? '★' : '☆';
+          fav.addEventListener('click', (event) => {
+            event.stopPropagation();
+            toggleFavorite(skill);
+          });
+
+          const popover = document.createElement('div');
+          popover.className = 'detail-popover' + (detailSkill && detailSkill.id === skill.id ? ' open' : '');
+          popover.innerHTML = '<div><strong>适用场景：</strong>' + (skill.scene || '适合复用当前对话中的稳定工作流') + '</div>'
+            + '<div><strong>需要输入：</strong>' + (skill.input || '任务目标、素材信息、风格要求') + '</div>'
+            + '<div><strong>预期输出：</strong>' + (skill.output || '结构化结果、可复用提示词、下一步建议') + '</div>';
+          popover.addEventListener('click', event => event.stopPropagation());
+
+          row.append(bolt, main, fav, popover);
+          skillList.appendChild(row);
+        });
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = activeTab === 'favorite'
+          ? '还没有收藏的 Skill，可以在通用或我的列表里点星标收藏'
+          : activeTab === 'mine'
+            ? '还没有你创建的 Skill，可以从右上角“创建”里将本次对话转化为 Skill'
+            : '没找到合适的 Skill';
+        skillList.appendChild(empty);
+      }
+    }
+    function toggleFavorite(skill) {
+      if (favoriteIds.has(skill.id)) favoriteIds.delete(skill.id);
+      else favoriteIds.add(skill.id);
+      if (activeTab === 'favorite' && detailSkill && !favoriteIds.has(detailSkill.id)) detailSkill = null;
+      renderRows();
+    }
+    function chooseSkill(skill) {
+      selected = skill;
+      selectedName.textContent = skill.name;
+      selectedTag.classList.add('show');
+      skillBtn.classList.add('active');
+      picker.classList.remove('open');
+      createMenu.classList.remove('open');
+      renderRows();
+      promptInput.focus();
+    }
+    function addMessage(role, html) {
+      const msg = document.createElement('div');
+      msg.className = 'msg';
+      msg.innerHTML = '<strong>' + role + '</strong>' + html;
+      messages.appendChild(msg);
+      messages.scrollTop = messages.scrollHeight;
+      return msg;
+    }
+    function escapeHtml(text) {
+
+      return String(text || '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[ch]));
+    }
+    function normalizeText(text) {
+      return String(text || '').replace(/\s+/g, ' ').trim();
+    }
+    function getFragments(text) {
+      return normalizeText(text).replace(/[。！？!?；;，,、]/g, ' ').split(/\s+/).filter(Boolean).slice(0, 4);
+    }
+    function buildExecutionPlan(skill, text) {
+      const fragments = getFragments(text);
+      const focus = fragments[0] || '当前任务';
+      const support = fragments[1] || '关键约束';
+      const output = fragments[2] || '交付结果';
+      if (skill.id === 'script-generator') {
+        return [
+          { title: '拆解角色和主题', desc: '先确认这次脚本要围绕什么人物与目标展开', note: '先聚焦「' + focus + '」' },
+          { title: '搭出三段式结构', desc: '把起承转合先搭出来，再补冲突和转折', note: '正在结合「' + support + '」' },
+          { title: '写出脚本正文', desc: '把结构落成可直接看的脚本内容', note: '准备输出「' + output + '」' },
+          { title: '提炼分镜入口', desc: '标出后续适合切到分镜的段落', note: '检查是否适合继续进入分镜' }
+        ];
+      }
+      if (skill.id === 'storyboard-designer') {
+        return [
+          { title: '读取脚本结构', desc: '先确认脚本主线和镜头起点', note: '聚焦「' + focus + '」' },
+          { title: '拆成关键镜头', desc: '把主要动作和画面节点拆开', note: '正在结合「' + support + '」' },
+          { title: '补齐镜头语言', desc: '补景别、机位和转场提示', note: '准备输出「' + output + '」' },
+          { title: '整理成可执行分镜', desc: '把分镜整理成可交付格式', note: '检查是否能直接进入视频环节' }
+        ];
+      }
+      if (skill.id === 'seedance-prompt-engine') {
+        return [
+          { title: '读取分镜重点', desc: '先确认要投喂的视频内容重点', note: '聚焦「' + focus + '」' },
+          { title: '补动作和镜头', desc: '把动作链和镜头运动写完整', note: '正在结合「' + support + '」' },
+          { title: '合成提示词', desc: '整理成可直接投喂的提示词', note: '准备输出「' + output + '」' },
+          { title: '校验执行风险', desc: '检查是否还有冲突或缺失信息', note: '检查是否适合直接生成' }
+        ];
+      }
+      if (skill.id === 'image-prompt-engine') {
+        return [
+          { title: '提取主体特征', desc: '先抓住画面主体和风格', note: '聚焦「' + focus + '」' },
+          { title: '补环境和构图', desc: '把环境、视角和构图补完整', note: '正在结合「' + support + '」' },
+          { title: '合成出图提示词', desc: '整理成可直接用的图片提示词', note: '准备输出「' + output + '」' },
+          { title: '检查出图可读性', desc: '看看是否还需要补负向词', note: '检查是否适合直接出图' }
+        ];
+      }
+      if (skill.id === 'copy-caption-generator') {
+        return [
+          { title: '提炼传播重点', desc: '先把内容里最能传播的点拎出来', note: '聚焦「' + focus + '」' },
+          { title: '匹配平台语气', desc: '按平台和受众组织表达', note: '正在结合「' + support + '」' },
+          { title: '生成文案版本', desc: '写成可直接选用的标题和口播', note: '准备输出「' + output + '」' },
+          { title: '整理可复用模板', desc: '提炼成下一次也能复用的结构', note: '检查是否适合继续扩写' }
+        ];
+      }
+      if (skill.id === 'prompt-lint') {
+        return [
+          { title: '扫描冲突项', desc: '先找提示词里是否互相打架', note: '聚焦「' + focus + '」' },
+          { title: '检查缺失信息', desc: '看看还缺哪些必要说明', note: '正在结合「' + support + '」' },
+          { title: '标注修复方向', desc: '给出怎么改更顺的建议', note: '准备输出「' + output + '」' },
+          { title: '输出可执行结论', desc: '整理成体检结论和修改建议', note: '检查是否适合继续修复' }
+        ];
+      }
+      if (skill.id === 'prompt-fix') {
+        return [
+          { title: '读取原始提示词', desc: '先确认原文想做什么', note: '聚焦「' + focus + '」' },
+          { title: '补齐关键要素', desc: '把缺失约束和目标补完整', note: '正在结合「' + support + '」' },
+          { title: '改写可执行版本', desc: '整理成更适合执行的提示词', note: '准备输出「' + output + '」' },
+          { title: '确认最终可用稿', desc: '把结果收成一个可复制版本', note: '检查是否适合直接投喂' }
+        ];
+      }
+      if (skill.id === 'video-analysis-to-script') {
+        return [
+          { title: '拆视频结构', desc: '先读出视频的整体结构和节奏', note: '聚焦「' + focus + '」' },
+          { title: '抽取关键镜头', desc: '把画面变化拆成关键节点', note: '正在结合「' + support + '」' },
+          { title: '改写成脚本', desc: '把镜头语言落成脚本正文', note: '准备输出「' + output + '」' },
+          { title: '标出可复用段落', desc: '整理成后续可继续改写的版本', note: '检查是否适合进入分镜' }
+        ];
+      }
+      return [
+        { title: '理解任务', desc: '先确认这次要做什么', note: '聚焦「' + focus + '」' },
+        { title: '套用 Skill', desc: '按当前 Skill 的方法执行', note: '正在结合「' + support + '」' },
+        { title: '整理结果', desc: '输出成可交付的内容', note: '准备输出「' + output + '」' },
+        { title: '沉淀复用线索', desc: '提炼后续能重复用的部分', note: '检查是否适合收藏或转化为我的 Skill' }
+      ];
+    }
+    function buildSkillResult(skill, text) {
+      const fragments = getFragments(text);
+      const focus = fragments[0] || '当前需求';
+      const second = fragments[1] || '关键约束';
+      const third = fragments[2] || '交付目标';
+      const focusHtml = escapeHtml(focus);
+      const secondHtml = escapeHtml(second);
+      const thirdHtml = escapeHtml(third);
+      switch (skill.id) {
+        case 'script-generator': {
+          const title = '《' + focusHtml + '》短片脚本';
+          return {
+            headline: '脚本正文',
+            summary: '已把「' + focusHtml + '」写成可直接看的脚本正文。',
+            points: [
+              '片头先交代主角和世界观，再把任务抛出来。',
+              '中段围绕 ' + secondHtml + ' 组织冲突和推进。',
+              '结尾落到 ' + thirdHtml + '，方便接下一步分镜。'
+            ],
+            script: [
+              '标题：' + title,
+              '场景 1｜开场',
+              '画面：镜头从远景推进到主角，交代 ' + focusHtml + ' 的场景氛围。',
+              '旁白：在这个世界里，' + focusHtml + ' 是被不断放大的命题。',
+              '对白：主角低声说，“我必须先弄清楚眼前的局面。”',
+              '场景 2｜推进',
+              '画面：人物开始围绕 ' + secondHtml + ' 展开行动，节奏逐渐加快。',
+              '对白：同伴提醒，“别只看表面，真正的变化已经开始了。”',
+              '场景 3｜转折',
+              '画面：关键线索出现，镜头切到 ' + thirdHtml + ' 的决定性瞬间。',
+              '旁白：所有线索开始汇合，故事进入下一段。',
+              '场景 4｜收束',
+              '画面：主角做出选择，镜头停留在结果与余韵上。',
+              '收尾：留出一个能继续展开分镜的开放式结尾。'
+            ],
+            tail: '这就是当前 Skill 真正生成出来的脚本正文。'
+          };
+        }
+        case 'storyboard-designer':
+          return {
+            headline: '分镜拆解结果',
+            summary: '已把「' + focusHtml + '」拆成可执行的分镜结构。',
+            points: [
+              '镜头 1：先建立 ' + focusHtml + ' 的场景和主体',
+              '镜头 2：围绕 ' + secondHtml + ' 推进动作变化',
+              '镜头 3：用 ' + thirdHtml + ' 收束为可拍的画面重点'
+            ],
+            tail: '下一步可继续补景别、转场和镜头运动。'
+          };
+        case 'seedance-prompt-engine':
+          return {
+            headline: '视频提示词结构',
+            summary: '已把「' + focusHtml + '」整理成可直接投喂的视频提示词。',
+            points: [
+              '主体动作：围绕 ' + focusHtml + ' 明确动作链路',
+              '镜头要求：补充 ' + secondHtml + ' 对镜头节奏的要求',
+              '风格收束：最后统一到 ' + thirdHtml + '，方便提交生成'
+            ],
+            tail: '下一步可以继续补参数和负向限制。'
+          };
+        case 'image-prompt-engine':
+          return {
+            headline: '图片提示词结果',
+            summary: '已把「' + focusHtml + '」整理成适合出图的提示词结构。',
+            points: [
+              '主体：明确 ' + focusHtml + ' 的核心视觉特征',
+              '环境：补上 ' + secondHtml + ' 的空间和背景信息',
+              '构图：结合 ' + thirdHtml + ' 收束成统一风格'
+            ],
+            tail: '下一步可直接投图片生成链路。'
+          };
+        case 'copy-caption-generator':
+          return {
+            headline: '文案生成结果',
+            summary: '已围绕「' + focusHtml + '」生成一组可继续调整的文案方向。',
+            points: [
+              '标题：把 ' + focusHtml + ' 压缩成一句吸引人的表达',
+              '口播：围绕 ' + secondHtml + ' 组织成顺口版本',
+              '短文案：补上 ' + thirdHtml + ' 作为收尾和转化'
+            ],
+            tail: '下一步可以挑一个版本继续扩写。'
+          };
+        case 'prompt-lint':
+          return {
+            headline: '提示词体检结果',
+            summary: '已检查「' + focusHtml + '」这段提示词的可执行性。',
+            points: [
+              '目标是否明确：当前是否已经说清 ' + focusHtml,
+              '约束是否完整：是否还缺 ' + secondHtml,
+              '输出是否统一：建议把 ' + thirdHtml + ' 补成固定格式'
+            ],
+            tail: '下一步建议补齐缺失信息后再执行。'
+          };
+        case 'prompt-fix':
+          return {
+            headline: '修复后的提示词',
+            summary: '已把「' + focusHtml + '」修成更适合执行的版本。',
+            points: [
+              '已保留核心目标：' + focusHtml,
+              '已补齐约束信息：' + secondHtml,
+              '已规范输出目标：' + thirdHtml
+            ],
+            tail: '下一步可以直接复制到生成链路中。'
+          };
+        case 'video-analysis-to-script':
+          return {
+            headline: '视频拆脚本结果',
+            summary: '已把「' + focusHtml + '」拆成可复用的脚本草稿。',
+            points: [
+              '视频开头：提炼 ' + focusHtml + ' 的核心信息',
+              '中段推进：记录 ' + secondHtml + ' 的节奏变化',
+              '结尾落点：整理成 ' + thirdHtml + ' 的脚本收束'
+            ],
+            tail: '下一步可以继续细化镜头和对白。'
+          };
+        default:
+          return {
+            headline: '结构化结果',
+            summary: '已把「' + focusHtml + '」整理成可复用的执行结果。',
+            points: [
+              '目标：' + focusHtml,
+              '约束：' + secondHtml,
+              '输出：' + thirdHtml
+            ],
+            tail: '下一步可以继续复用这套流程。'
+          };
+      }
+    }
+    function buildResultHtml(skill, result) {
+      const points = result.points && result.points.length
+        ? '<ul class="result-list">' + result.points.map(point => '<li>' + escapeHtml(point) + '</li>').join('') + '</ul>'
+        : '';
+      const script = result.script ? '<pre class="result-script">' + escapeHtml(result.script.join('\n')) + '</pre>' : '';
+      return '<div><strong>Agent</strong><div>' + escapeHtml(result.summary) + '</div>' + points + script + '<div class="result-tail">' + escapeHtml(result.tail) + '</div></div>';
+    }
+    function renderExecutionDock(skill, text, stage, plan, result) {
+      const doneCount = Math.min(stage, plan.length);
+      const rows = plan.map((step, index) => {
+        const done = index < doneCount;
+        const current = index === doneCount && doneCount < plan.length;
+        const cls = done ? ' done' : current ? ' current' : '';
+        const mark = done ? '✓' : '';
+        return '<div class="run-step' + cls + '"><span class="run-dot">' + mark + '</span><div class="run-step-body"><div class="run-step-title">' + escapeHtml(step.title) + '</div><div class="run-step-desc">' + escapeHtml(step.desc) + '</div></div></div>';
+      }).join('');
+      runDock.classList.add('show');
+      if (stage < plan.length) runDock.classList.add('open');
+      if (stage >= plan.length) runDock.classList.remove('open');
+      runDock.innerHTML = '<div class="run-head" id="runHead"><div class="run-title">☷ 任务清单 <span class="run-meta">' + doneCount + '/' + plan.length + '</span></div><div class="run-meta">' + (stage >= plan.length ? '已完成' : '执行中') + ' ›</div></div><div class="run-body"><div class="run-steps">' + rows + '</div></div>';
+      const head = document.getElementById('runHead');
+      if (head) head.addEventListener('click', () => runDock.classList.toggle('open'));
+    }
+    function renderExecutionCard(card, skill, text, stage, plan, result) {
+
+
+      const doneCount = Math.min(stage, plan.length);
+      const rows = plan.map((step, index) => {
+        const done = index < doneCount;
+        const current = index === doneCount && doneCount < plan.length;
+        const cls = done ? ' done' : current ? ' current' : '';
+        const mark = done ? '✓' : '';
+        return '<div class="task-step' + cls + '"><span class="task-dot">' + mark + '</span><div class="task-step-body"><div class="task-step-title">' + escapeHtml(step.title) + '</div><div class="task-step-desc">' + escapeHtml(step.desc) + '</div></div></div>';
+      }).join('');
+      const note = stage === 0 ? '我先把任务拆开，再开始推进。' : plan[Math.min(stage - 1, plan.length - 1)].note;
+      const resultBlock = stage >= plan.length
+        ? '<div class="execution-result"><div class="execution-result-head"><span>已生成结果</span><span>' + escapeHtml(skill.name) + '</span></div><div class="execution-result-title">' + escapeHtml(result.headline) + '</div><div class="execution-summary">' + escapeHtml(result.summary) + '</div>' + (result.script ? '<pre class="execution-script">' + escapeHtml(result.script.join('\n')) + '</pre>' : '<ul class="result-list">' + result.points.map(point => '<li>' + escapeHtml(point) + '</li>').join('') + '</ul>') + '<div class="execution-tail">' + escapeHtml(result.tail) + '</div></div>'
+        : '<div class="execution-result pending">结果还在整理中，先继续推进当前步骤。</div>';
+      card.innerHTML = '<strong>Agent</strong><div class="task-card execution-shell"><div class="task-head"><span>任务规划</span><span class="task-count">' + doneCount + '/' + plan.length + '</span></div><div class="execution-intro">' + escapeHtml(note) + '</div>' + rows + resultBlock + '</div>';
+      messages.scrollTop = messages.scrollHeight;
+    }
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    function positionPickerToSkillButton() {
+      if (!picker.classList.contains('open')) return;
+      picker.style.visibility = 'hidden';
+      picker.style.left = '0px';
+      picker.style.top = '0px';
+      picker.style.right = 'auto';
+      picker.style.bottom = 'auto';
+      const buttonRect = skillBtn.getBoundingClientRect();
+      const panelRect = picker.getBoundingClientRect();
+      const chatRect = document.querySelector('.chat').getBoundingClientRect();
+      const gap = 8;
+      const minLeft = chatRect.left + 12;
+      const maxLeft = chatRect.right - panelRect.width - 12;
+      const preferredLeft = buttonRect.right - panelRect.width;
+      const left = Math.max(minLeft, Math.min(maxLeft, preferredLeft));
+      const top = Math.max(12, buttonRect.top - panelRect.height - gap);
+      picker.style.left = left + 'px';
+      picker.style.top = top + 'px';
+      picker.style.visibility = 'visible';
+    }
+
+    function maybeShowSaveToast() {
+      if (saveToastDismissed || draftPanel.classList.contains('open')) return;
+      if (conversationTurns >= 4) saveStrip.classList.add('show');
+    }
+    const REAL_SKILL_API_BASE = 'http://127.0.0.1:8091';
+    async function callRealSkill(skill, prompt) {
+      if (!/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) {
+        throw new Error('static demo: no local skill bridge');
+      }
+      const res = await fetch(REAL_SKILL_API_BASE + '/api/run-skill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skill_id: skill.id, prompt, skill_name: skill.name })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || '真实 Skill 调用失败');
+      }
+      return data;
+    }
+    function buildRealResultPayload(skill, prompt, data) {
+      const scriptLines = String(data.script || '').split(/\\r?\\n/).map(line => line.trim()).filter(Boolean);
+      return {
+        headline: skill.name + ' 真实输出',
+        summary: '已通过本地真实桥接服务调用 ad-script-writer。',
+        script: scriptLines,
+        tail: '来源：' + (data.source || 'real skill bridge')
+      };
+    }
+    skillBtn.addEventListener('click', () => {
+      picker.classList.toggle('open');
+      draftPanel.classList.remove('open');
+      createMenu.classList.remove('open');
+      if (picker.classList.contains('open')) {
+        requestAnimationFrame(positionPickerToSkillButton);
+        search.focus();
+      }
+    });
+    tabBtns.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
+    createBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      createMenu.classList.toggle('open');
+    });
+    convertFromMenu.addEventListener('click', () => {
+      createMenu.classList.remove('open');
+      picker.classList.remove('open');
+      draftPanel.classList.add('open');
+    });
+    search.addEventListener('focus', closeDetailPopover);
+    search.addEventListener('input', renderRows);
+    removeSkill.addEventListener('click', () => {
+      selected = null;
+      selectedTag.classList.remove('show');
+      skillBtn.classList.remove('active');
+      renderRows();
+    });
+    send.addEventListener('click', async () => {
+      const text = promptInput.value.trim();
+      if (!selected) {
+        addMessage('Agent', '请先选择一个 Skill，或移除 Skill 后作为普通对话继续。');
+        return;
+      }
+      addMessage('你', '<strong>使用：' + selected.name + '</strong>' + (text || '执行当前任务'));
+      promptInput.value = '';
+      const chosen = selected;
+      const executionPlan = buildExecutionPlan(chosen, text);
+      renderExecutionDock(chosen, text, 0, executionPlan, { points: [], tail: '' });
+      await wait(420);
+      renderExecutionDock(chosen, text, 1, executionPlan, { points: [], tail: '' });
+      await wait(420);
+      renderExecutionDock(chosen, text, 2, executionPlan, { points: [], tail: '' });
+      await wait(420);
+      renderExecutionDock(chosen, text, 3, executionPlan, { points: [], tail: '' });
+      try {
+        const real = await callRealSkill(chosen, text || '帮我生成一个适合东方奇幻短片的游戏角色设定');
+        renderExecutionDock(chosen, text, 4, executionPlan, { points: [], tail: '真实调用成功' });
+        const realResult = buildRealResultPayload(chosen, text, real);
+        addMessage('Agent', buildResultHtml(chosen, realResult).replace('<strong>Agent</strong>', ''));
+        conversationTurns += 1;
+        draftName.value = '对话转化流程';
+        draftDesc.value = '从本次「' + chosen.name + '」对话总结出的个人 Skill，可在后续类似任务中复用';
+        draftInput.value = chosen.input || '任务目标、素材信息、风格要求、输出用途';
+        draftOutput.value = chosen.output || '结构化结果、可复用提示词、下一步建议';
+        selected = null;
+        selectedTag.classList.remove('show');
+        skillBtn.classList.remove('active');
+        renderRows();
+        maybeShowSaveToast();
+      } catch (error) {
+        const fallback = buildSkillResult(chosen, text);
+        renderExecutionDock(chosen, text, 4, executionPlan, { points: [], tail: '演示结果' });
+        addMessage('Agent', buildResultHtml(chosen, fallback).replace('<strong>Agent</strong>', ''));
+        conversationTurns += 1;
+        draftName.value = '角色设定生成';
+        draftDesc.value = '从本次「' + chosen.name + '」对话总结出的个人 Skill，可在后续类似任务中复用';
+        draftInput.value = chosen.input || '任务目标、素材信息、风格要求、输出用途';
+        draftOutput.value = chosen.output || '结构化结果、可复用提示词、下一步建议';
+        selected = null;
+        selectedTag.classList.remove('show');
+        skillBtn.classList.remove('active');
+        renderRows();
+        maybeShowSaveToast();
+      }
+    });
+    openDraft.addEventListener('click', () => {
+      draftPanel.classList.add('open');
+      picker.classList.remove('open');
+    });
+    dismissSave.addEventListener('click', () => {
+      saveToastDismissed = true;
+      saveStrip.classList.remove('show');
+    });
+    closeDraft.addEventListener('click', () => draftPanel.classList.remove('open'));
+    cancelDraft.addEventListener('click', () => draftPanel.classList.remove('open'));
+    saveSkill.addEventListener('click', () => {
+      const name = draftName.value.trim() || '我的 Skill';
+      const desc = draftDesc.value.trim() || '从对话总结出的个人 Skill';
+      mySkills.unshift({
+        name,
+        id: 'my-' + Date.now(),
+        desc,
+        scene: '从当前对话沉淀出的个人复用流程',
+        input: draftInput.value.trim() || '任务目标、素材信息、风格要求',
+        output: draftOutput.value.trim() || '结构化结果、可复用提示词、下一步建议'
+      });
+      draftPanel.classList.remove('open');
+      saveStrip.classList.remove('show');
+      addMessage('Agent', '已保存到我的 Skill。现在已经切到「我的」列表，你可以直接选择刚生成的 Skill 再次调用，也可以点星标收藏。');
+      picker.classList.add('open');
+      setActiveTab('mine');
+    });
+    document.addEventListener('click', (event) => {
+      const clickedDetail = event.target.closest('.info-dot') || event.target.closest('.detail-popover');
+      if (detailSkill && !clickedDetail) closeDetailPopover();
+      if (!event.target.closest('.composer-wrap') && !event.target.closest('.picker') && !event.target.closest('.draft-panel')) {
+        picker.classList.remove('open');
+        draftPanel.classList.remove('open');
+        createMenu.classList.remove('open');
+        closeDetailPopover();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        picker.classList.remove('open');
+        draftPanel.classList.remove('open');
+        createMenu.classList.remove('open');
+        closeDetailPopover();
+      }
+    });
+    window.addEventListener('resize', positionPickerToSkillButton);
+    renderRows();
+  </script>
+  <script>
+(function () {
+  const tabs = Array.prototype.slice.call(document.querySelectorAll('.left-tab'));
+  const rows = Array.prototype.slice.call(document.querySelectorAll('.tree-row'));
+  const empty = document.getElementById('assetEmpty');
+  const leftSearch = document.getElementById('leftSearch');
+  let pane = 'canvas';
+  function applyPane() {
+    const q = (leftSearch.value || '').trim().toLowerCase();
+    let shown = 0;
+    rows.forEach(function (r) {
+      const okPane = r.dataset.pane === pane;
+      const okName = !q || String(r.dataset.name || '').toLowerCase().indexOf(q) > -1;
+      const show = okPane && okName;
+      r.style.display = show ? '' : 'none';
+      if (show) shown += 1;
+    });
+    empty.style.display = shown ? 'none' : 'block';
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      pane = t.dataset.pane;
+      applyPane();
+    });
+  });
+  leftSearch.addEventListener('input', applyPane);
+  applyPane();
+
+  const promptInput = document.getElementById('prompt');
+  const counter = document.getElementById('charCount');
+  function syncCount() { counter.textContent = String((promptInput.value || '').length) + ' / 2000'; }
+  promptInput.addEventListener('input', syncCount);
+  syncCount();
+
+  let zoom = 11;
+  const zVal = document.getElementById('zoomValue');
+  function setZoom(v) {
+    zoom = Math.min(400, Math.max(5, v));
+    zVal.textContent = zoom + '%';
+  }
+  document.querySelector('.z-in').addEventListener('click', function () { setZoom(zoom + 5); });
+  document.querySelector('.z-out').addEventListener('click', function () { setZoom(zoom - 5); });
+
+  document.getElementById('newSession').addEventListener('click', function () {
+    document.getElementById('messages').innerHTML =
+      '<div class="msg"><strong>Agent</strong>新会话已开启。选择一个 Skill，描述你的目标，我会按同样的方式推进。</div>';
+  });
+
+  document.getElementById('backNode').addEventListener('click', function () {
+    document.querySelector('.floating-note').style.display = 'none';
+  });
+
+  document.getElementById('dupNode').addEventListener('click', function () {
+    const all = Array.prototype.slice.call(document.querySelectorAll('.ghost-node'));
+    const src = document.querySelector('.ghost-node.selected') || all[0];
+    if (!src) return;
+    const clone = src.cloneNode(true);
+    clone.style.left = (parseFloat(src.style.left) + 42) + 'px';
+    clone.style.top = (parseFloat(src.style.top) + 42) + 'px';
+    all.forEach(function (n) { n.classList.remove('selected'); });
+    clone.classList.add('selected');
+    src.parentNode.appendChild(clone);
+  });
+
+  Array.prototype.slice.call(document.querySelectorAll('.nav-item')).forEach(function (n) {
+    n.addEventListener('click', function () {
+      document.querySelectorAll('.nav-item').forEach(function (x) { x.classList.remove('active'); });
+      n.classList.add('active');
+    });
+  });
+})();
+  </script>
+</body>
+</html>
