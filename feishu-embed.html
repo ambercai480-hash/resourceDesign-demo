@@ -1,10 +1,14 @@
 <!doctype html>
 <html lang="zh-CN">
+<!doctype html>
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,">
-  <title>画布 Agent Skill 接入 Demo</title>
+  <meta name="use-iframe" content="true">
+  <meta name="html-box-height-mode" content="viewport">
+  <meta name="description" content="画布 Agent Skill 接入 Demo：资产库 + 画布 + Agent 对话三栏布局，演示 Skill 入口、选择器（分组/搜索/键盘导航）、选中挂载、任务清单执行、结果回填、对话沉淀为我的 Skill 的完整状态流转。">
+  <title>画布 Agent Skill 交互 Demo</title>
   <style>
 :root{
   --brand:#165DFF;--brand-hover:#0B5EFF;--brand-soft:#E8F3FF;--brand-soft-2:#F2F7FF;
@@ -310,8 +314,26 @@ input,textarea{font-family:inherit}
 .demo-step.done{color:var(--brand);background:var(--brand-soft-2);border-color:#DCE8FF}
 .demo-step.active{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
 </style>
+<style>
+body.embed{--chat-w:min(420px,52vw)}
+body.embed .left{display:none}
+body.embed .topnav{gap:16px;padding:0 14px}
+body.embed .brand-logo{font-size:15px}
+body.embed .nav-item{padding:0 9px;font-size:13px}
+body.embed .demo-strip{padding:7px 10px 8px}
+body.embed .demo-caption{display:none}
+body.embed .picker{width:min(392px,calc(100vw - 20px))}
+body.embed .user-chip .u-sub{display:none}
+body.embed .demo-top{flex-wrap:wrap;gap:6px}
+body.embed .demo-btn{padding:0 7px;font-size:11px}
+body.embed .crumb span,body.embed .ghost-btn,body.embed .floating-note,body.embed .floating-note .btn-small{white-space:nowrap}
+body.embed .canvas-top-right{gap:6px}
+body.embed .chat-title{font-size:13px}
+body.embed #demoFold{display:none}
+@media (max-width:640px){body.embed .nav-menu{display:none}body.embed .canvas{display:none}body.embed{--chat-w:100%}}
+</style>
 </head>
-<body>
+<body class="embed">
   <nav class="topnav">
     <div class="brand-logo"><span class="mascot">🐵</span><span>贪玩游戏</span></div>
     <div class="nav-menu">
